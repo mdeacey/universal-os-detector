@@ -6,12 +6,11 @@ trap 'log "Error encountered at line ${LINENO:-unknown} while executing command:
 LOG_FILE=${LOG_FILE:-~/universal-os-detector.log}
 DEBUG_MODE=${DEBUG_MODE:-0}
 
-# Define colors for log levels
-COLOR_ERROR='\033[0;31m'   # Red
-COLOR_WARN='\033[0;33m'    # Yellow
-COLOR_INFO='\033[0;30m'    # Grey
-COLOR_SYSTEM='\033[0;37m'  # White
-COLOR_RESET='\033[0m'      # Reset to default color
+COLOR_ERROR='\033[0;31m'
+COLOR_WARN='\033[0;33m'
+COLOR_INFO='\033[0;30m'
+COLOR_SYSTEM='\033[0;37m'
+COLOR_RESET='\033[0m'
 
 cleanup() {
     log "Cleaning up resources..." INFO
@@ -35,13 +34,12 @@ log() {
         WARN) color=$COLOR_WARN ;;
         INFO) color=$COLOR_INFO ;;
         SYSTEM) color=$COLOR_SYSTEM ;;
-        DEBUG) color=$COLOR_RESET ;;  # DEBUG messages are not colored
+        DEBUG) color=$COLOR_RESET ;;
         *) color=$COLOR_RESET ;;
     esac
 
     echo -e "$current_time [$level]: $message" >> "$LOG_FILE"
 
-    # Output to console based on DEBUG_MODE
     if [ "$DEBUG_MODE" -eq 1 ] || [ "$level" = "SYSTEM" ] || [ "$level" = "ERROR" ]; then
         echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
     fi
