@@ -150,22 +150,25 @@ function_tests() {
     log "All function tests passed." INFO
 }
 
+run_detection() {
+    function_tests
+
+    log "Starting detection..." INFO
+
+    detect_container
+    detect_os
+    detect_arch
+    detect_kernel
+
+    log "Detection completed." INFO
+
+    cleanup
+}
+
 REQUIRED_COMMANDS=(
     "uname"
     "tr"
     "grep"
 )
 
-# Run function tests only once
-function_tests
-
-log "Starting detection..." INFO
-
-detect_container
-detect_os
-detect_arch
-detect_kernel
-
-log "Detection completed." INFO
-
-cleanup
+run_detection

@@ -81,6 +81,22 @@ LOG_FILE=/path/to/custom.log ./uni_os_detect.sh
 
 Output is logged to the specified log file and, depending on the debug mode, displayed in the console with color-coded messages for different log levels.
 
+## Integrating with Other Scripts
+
+You can easily incorporate the Universal OS Detector into your own scripts with the following one-liner:
+
+```bash
+source <(curl -sL https://raw.githubusercontent.com/mdeacey/universal-os-detector/main/universal-os-detector.sh) && run_detection
+```
+
+Alternatively, you can use `wget`:
+
+```bash
+source <(wget -qO- https://raw.githubusercontent.com/mdeacey/universal-os-detector/main/universal-os-detector.sh) && run_detection
+```
+
+This command fetches the script from GitHub, sources it, and executes the `run_detection` function, which performs all detection operations and logs the results.
+
 ## Requirements
 
 - Bash shell
