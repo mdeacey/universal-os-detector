@@ -13,10 +13,10 @@ Universal OS Detector is a Bash script designed to provide detailed information 
 
 ## Installation
 
-1. Clone this repository or download the `uni_os_detect.sh` script.
+1. Clone this repository or download the `universal-os-detector.sh` script.
 2. Make the script executable:
    ```
-   chmod +x uni_os_detect.sh
+   chmod +x universal-os-detector.sh
    ```
 
 ## Usage and Examples
@@ -24,7 +24,7 @@ Universal OS Detector is a Bash script designed to provide detailed information 
 Run the script with:
 
 ```
-./uni_os_detect.sh
+./universal-os-detector.sh
 ```
 
 The script provides information about:
@@ -38,7 +38,7 @@ The script provides information about:
 When run without any options, the script outputs only the system information:
 
 ```
-$ ./uni_os_detect.sh
+$ ./universal-os-detector.sh
 2024-09-17 14:14:15 [SYSTEM]: Not running inside a container
 2024-09-17 14:14:15 [SYSTEM]: Operating System: MacOS
 2024-09-17 14:14:15 [SYSTEM]: Architecture: x86_64 (64-bit)
@@ -50,10 +50,10 @@ $ ./uni_os_detect.sh
 Enable debug mode to see detailed logging of the script's operations:
 
 ```
-$ DEBUG_MODE=1 ./uni_os_detect.sh
+$ DEBUG_MODE=1 ./universal-os-detector.sh
 2024-09-17 13:57:24 [INFO]: Running function tests...
 2024-09-17 13:57:24 [INFO]: Checking command availability...
-2024-09-17 13:57:24 [INFO]: Checking file access for: /Users/admin/uni_os_detect.log...
+2024-09-17 13:57:24 [INFO]: Checking file access for: /Users/admin/universal-os-detector.log...
 2024-09-17 13:57:24 [INFO]: All function tests passed.
 2024-09-17 13:57:24 [INFO]: Starting detection...
 2024-09-17 13:57:24 [INFO]: Detecting container environment...
@@ -76,7 +76,7 @@ $ DEBUG_MODE=1 ./uni_os_detect.sh
 Specify a custom log file path:
 
 ```
-LOG_FILE=/path/to/custom.log ./uni_os_detect.sh
+LOG_FILE=/path/to/custom.log ./universal-os-detector.sh
 ```
 
 Output is logged to the specified log file and, depending on the debug mode, displayed in the console with color-coded messages for different log levels.

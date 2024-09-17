@@ -3,7 +3,7 @@
 set -eo pipefail
 trap 'log "Error encountered at line ${LINENO:-unknown} while executing command: ${BASH_COMMAND:-unknown}" "ERROR"' ERR
 
-LOG_FILE=${LOG_FILE:-~/uni_os_detect.log}
+LOG_FILE=${LOG_FILE:-~/universal-os-detector.log}
 DEBUG_MODE=${DEBUG_MODE:-0}
 
 # Define colors for log levels
