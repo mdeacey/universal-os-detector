@@ -4,10 +4,8 @@ set -eo pipefail
 trap 'log "Error encountered at line ${LINENO:-unknown} while executing command: ${BASH_COMMAND:-unknown}" "ERROR"' ERR
 trap 'log "Received termination signal. Exiting." "WARN"; cleanup' SIGINT SIGTERM
 
-# Default LOG_FILE and CONSOLE_LOG_LEVEL (fallback to lowercase or uppercase if provided)
 LOG_FILE=${LOG_FILE:-~/universal-os-detector.log}
 
-# Check for both lowercase and uppercase environment variables
 CONSOLE_LOG_LEVEL=${console_log_level:-${CONSOLE_LOG_LEVEL:-1}}
 
 COLOR_ERROR='\033[0;31m'
@@ -64,7 +62,7 @@ validate_console_log_level() {
     local error_message
     local log_level_message
     local lower_case_level
-    
+
     lower_case_level=$(lowercase "$CONSOLE_LOG_LEVEL")
 
     case "$lower_case_level" in
