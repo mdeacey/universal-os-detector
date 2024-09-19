@@ -5,7 +5,14 @@ trap 'log "Error encountered at line ${LINENO:-unknown} while executing command:
 trap 'log "Received termination signal. Exiting." "WARN"; cleanup' SIGINT SIGTERM
 
 LOG_FILE=${LOG_FILE:-~/universal-os-detector.log}
-DEBUG_MODE=${DEBUG_MODE:-0}
+CONSOLE_LOG_LEVEL=${CONSOLE_LOG_LEVEL:-1}
+
+COLOR_ERROR='\033[0;31m'
+COLOR_WARN='\033[0;33m'
+COLOR_INFO='\033[0;30m'
+COLOR_SYSTEM='\033[0;37m'
+COLOR_RESET='\033[0m'
+COLOR_DEBUG='\033[0;36m'
 
 log() {
     local message="${1:-}"
@@ -14,18 +21,50 @@ log() {
 
     local color
     case "$level" in
-        ERROR) color='\033[0;31m' ;;
-        WARN) color='\033[0;33m' ;;
-        INFO) color='\033[0;30m' ;;
-        SYSTEM) color='\033[0;37m' ;;
-        DEBUG) color='\033[0m' ;;
-        *) color='\033[0m' ;;
+        ERROR) color=$COLOR_ERROR ;;
+        WARN) color=$COLOR_WARN ;;
+        INFO) color=$COLOR_INFO ;;
+        SYSTEM) color=$COLOR_SYSTEM ;;
+        DEBUG) color=$COLOR_DEBUG ;;
+        *) color=$COLOR_RESET ;;
     esac
 
     echo -e "$current_time [$level]: $message" >> "$LOG_FILE"
 
-    if [ "$DEBUG_MODE" -eq 1 ] || [ "$level" = "SYSTEM" ] || [ "$level" = "ERROR" ]; then
-        echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
+    case "$CONSOLE_LOG_LEVEL" in
+        0)  # NONE
+            return
+            ;;
+        1)  # DEFAULT
+            if [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" ]]; then
+                echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
+            fi
+            ;;
+        2)  # VERBOSE
+            if [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]]; then
+                echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
+            fi
+            ;;
+        3)  # DEBUGGING
+            if [[ "$level" == "DEBUG" || "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]]; then
+                echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
+            fi
+            ;;
+        *)
+            return
+            ;;
+    esac
+}
+
+validate_console_log_level() {
+    local log_level_message="Console log level is set to: $CONSOLE_LOG_LEVEL"
+    log "$log_level_message" INFO
+
+    if [[ ! "$CONSOLE_LOG_LEVEL" =~ ^[0-3]$ ]]; then
+        local error_message="Error: Invalid CONSOLE_LOG_LEVEL. It must be between 0 and 3."
+        echo -e "${COLOR_ERROR}$error_message${COLOR_RESET}" >&2
+        echo -e "$current_time [UNKNOWN]: $error_message" >> "$LOG_FILE"
+        exit 1
     fi
 }
 
@@ -298,6 +337,8 @@ cleanup() {
 }
 
 run_detection() {
+    validate_console_log_level
+
     function_tests
 
     log "Starting detection..." INFO
