@@ -69,7 +69,7 @@ Log levels:
 Here's an example of running the script with verbose logging (console_log_level=2):
 
 ```
-$ console_log_level=2 ./universal-os-detector.sh
+$ console_log_level=v ./universal-os-detector.sh
 2024-09-19 15:30:10 [info]: Console log level is set to: VERBOSE [2]
 2024-09-19 15:30:10 [info]: Running functional tests...
 2024-09-19 15:30:10 [info]: Checking command availability...
