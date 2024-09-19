@@ -15,45 +15,55 @@ COLOR_SYSTEM='\033[0;37m'
 COLOR_RESET='\033[0m'
 COLOR_DEBUG='\033[0;36m'
 
-lowercase() {
-    echo "$1" | tr '[:upper:]' '[:lower:]'
+get_log_color() {
+    local level="$1"
+    case "$level" in
+        ERROR) echo "$COLOR_ERROR" ;;
+        WARN) echo "$COLOR_WARN" ;;
+        INFO) echo "$COLOR_INFO" ;;
+        SYSTEM) echo "$COLOR_SYSTEM" ;;
+        DEBUG) echo "$COLOR_DEBUG" ;;
+        *) echo "$COLOR_RESET" ;;
+    esac
+}
+
+print_log_message() {
+    local color="$1"
+    local level="$2"
+    local message="$3"
+    local current_time="$4"
+
+    echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
+}
+
+should_log_to_console() {
+    local level="$1"
+    case "$CONSOLE_LOG_LEVEL" in
+        0) return 1 ;;
+        1) [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" ]] && return 0 || return 1 ;;
+        2) [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]] && return 0 || return 1 ;;
+        3) return 0 ;;
+        *) return 1 ;;
+    esac
 }
 
 log() {
     local message="${1:-}"
     local level="${2:-INFO}"
     local current_time=$(date '+%Y-%m-%d %H:%M:%S')
-
+    
     local color
-    case "$level" in
-        ERROR) color=$COLOR_ERROR ;;
-        WARN) color=$COLOR_WARN ;;
-        INFO) color=$COLOR_INFO ;;
-        SYSTEM) color=$COLOR_SYSTEM ;;
-        DEBUG) color=$COLOR_DEBUG ;;
-        *) color=$COLOR_RESET ;;
-    esac
+    color=$(get_log_color "$level")
 
     echo -e "$current_time [$level]: $message" >> "$LOG_FILE"
 
-    case "$CONSOLE_LOG_LEVEL" in
-        0)  return
-            ;;
-        1)  if [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" ]]; then
-                echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
-            fi
-            ;;
-        2)  if [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]]; then
-                echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
-            fi
-            ;;
-        3)  if [[ "$level" == "DEBUG" || "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]]; then
-                echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
-            fi
-            ;;
-        *)  echo -e "${COLOR_ERROR}Error: Invalid CONSOLE_LOG_LEVEL${COLOR_RESET}"
-            ;;
-    esac
+    if should_log_to_console "$level"; then
+        print_log_message "$color" "$level" "$message" "$current_time"
+    fi
+}
+
+lowercase() {
+    echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
 get_log_level() {
@@ -101,7 +111,7 @@ validate_console_log_level() {
     if [[ "$level_numeric" -eq -1 ]]; then
         handle_invalid_log_level_error
     fi
-    
+
     level_text=$(get_text_log_level "$level_numeric")
 
     CONSOLE_LOG_LEVEL="$level_numeric"
