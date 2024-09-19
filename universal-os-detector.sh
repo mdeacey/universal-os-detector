@@ -199,12 +199,16 @@ functional_tests() {
 detect_container() {
     log "Detecting container environment..." info
     if [ -f /.dockerenv ]; then
+        container_status="docker"
         log "Running inside Docker" system
     elif grep -q 'docker\|lxc' /proc/1/cgroup 2>/dev/null; then
+        container_status="container"
         log "Running inside a container (Docker/LXC)" system
     elif grep -q 'VxID' /proc/self/status 2>/dev/null; then
+        container_status="openvz"
         log "Running inside OpenVZ" system
     else
+        container_status="none"
         log "Not running inside a container" system
     fi
 }
