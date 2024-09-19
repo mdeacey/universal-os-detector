@@ -138,6 +138,53 @@ detect_kernel() {
     log "Kernel: $KERNEL" SYSTEM
 }
 
+detect_desktop_env() {
+    log "Detecting desktop environment..." INFO
+    local desktop_env="Unknown"
+
+    if [ "$OS" = "Linux" ]; then
+        if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+            desktop_env="$XDG_CURRENT_DESKTOP"
+        elif [ -n "$DESKTOP_SESSION" ]; then
+            desktop_env="$DESKTOP_SESSION"
+        else
+            if command -v kdialog &>/dev/null; then
+                desktop_env="KDE"
+            elif command -v zenity &>/dev/null; then
+                desktop_env="GNOME"
+            elif command -v xfce4-session &>/dev/null; then
+                desktop_env="Xfce"
+            elif command -v mate-session &>/dev/null; then
+                desktop_env="MATE"
+            elif command -v cinnamon-session &>/dev/null; then
+                desktop_env="Cinnamon"
+            elif command -v lxsession &>/dev/null; then
+                desktop_env="LXDE/LXQt"
+            elif command -v pantheon-session &>/dev/null; then
+                desktop_env="Pantheon"
+            elif command -v enlightenment_start &>/dev/null; then
+                desktop_env="Enlightenment"
+            elif command -v deepin-session &>/dev/null; then
+                desktop_env="Deepin"
+            fi
+        fi
+    elif [ "$OS" = "Windows" ]; then
+        if grep -qi microsoft /proc/version 2>/dev/null; then
+            desktop_env="WSL (Windows Subsystem for Linux)"
+        elif [[ "$OSTYPE" == "msys"* ]]; then
+            desktop_env="Git Bash"
+        elif [[ "$OSTYPE" == "cygwin"* ]]; then
+            desktop_env="Cygwin"
+        elif [[ "$OSTYPE" == "powershell"* ]]; then
+            desktop_env="PowerShell"
+        fi
+    elif [ "$OS" = "MacOS" ]; then
+        desktop_env="MacOS"
+    fi
+
+    log "Desktop Environment: $desktop_env" SYSTEM
+}
+
 function_tests() {
     log "Running function tests..." INFO
     log "Checking command availability..." INFO
@@ -155,6 +202,7 @@ run_detection() {
 
     detect_container
     detect_os
+    detect_desktop_env
     detect_arch
     detect_kernel
 
