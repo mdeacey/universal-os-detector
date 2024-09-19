@@ -7,15 +7,6 @@ trap 'log "Received termination signal. Exiting." "WARN"; cleanup' SIGINT SIGTER
 LOG_FILE=${LOG_FILE:-~/universal-os-detector.log}
 DEBUG_MODE=${DEBUG_MODE:-0}
 
-cleanup() {
-    log "Cleaning up resources..." INFO
-    log "Removing log file..." INFO
-    rm -f "$LOG_FILE".lock
-    log "Cleanup completed" INFO
-    log "Exiting..." INFO
-    exit 0
-}
-
 log() {
     local message="${1:-}"
     local level="${2:-INFO}"
@@ -295,6 +286,15 @@ detect_kernel() {
     KERNEL=$(uname -r || echo "Unknown kernel")
 
     log "Kernel: $KERNEL" SYSTEM
+}
+
+cleanup() {
+    log "Cleaning up resources..." INFO
+    log "Removing log file..." INFO
+    rm -f "$LOG_FILE".lock
+    log "Cleanup completed" INFO
+    log "Exiting..." INFO
+    exit 0
 }
 
 run_detection() {
