@@ -140,17 +140,19 @@ detect_kernel() {
 
 detect_desktop_env() {
     log "Detecting desktop environment..." INFO
-    local desktop_env="Unknown"
+    local desktop_env="Unknown desktop environment"
 
     if [ "$OS" = "Linux" ]; then
         if [ -n "$XDG_CURRENT_DESKTOP" ]; then
             desktop_env="$XDG_CURRENT_DESKTOP"
         elif [ -n "$DESKTOP_SESSION" ]; then
             desktop_env="$DESKTOP_SESSION"
+        elif [ -n "$GDMSESSION" ]; then
+            desktop_env="$GDMSESSION"
         else
             if command -v kdialog &>/dev/null; then
                 desktop_env="KDE"
-            elif command -v zenity &>/dev/null; then
+            elif command -v gnome-session &>/dev/null; then
                 desktop_env="GNOME"
             elif command -v xfce4-session &>/dev/null; then
                 desktop_env="Xfce"
@@ -159,13 +161,20 @@ detect_desktop_env() {
             elif command -v cinnamon-session &>/dev/null; then
                 desktop_env="Cinnamon"
             elif command -v lxsession &>/dev/null; then
-                desktop_env="LXDE/LXQt"
+                if command -v lxqt-session &>/dev/null; then
+                    desktop_env="LXQt"
+                else
+                    desktop_env="LXDE"
+                fi
             elif command -v pantheon-session &>/dev/null; then
                 desktop_env="Pantheon"
             elif command -v enlightenment_start &>/dev/null; then
                 desktop_env="Enlightenment"
             elif command -v deepin-session &>/dev/null; then
                 desktop_env="Deepin"
+            else
+                desktop_env="Unknown Linux desktop environment"
+                log "No known desktop Linux environment binaries found." WARN
             fi
         fi
     elif [ "$OS" = "Windows" ]; then
@@ -175,11 +184,15 @@ detect_desktop_env() {
             desktop_env="Git Bash"
         elif [[ "$OSTYPE" == "cygwin"* ]]; then
             desktop_env="Cygwin"
-        elif [[ "$OSTYPE" == "powershell"* ]]; then
+        elif command -v powershell.exe &>/dev/null; then
             desktop_env="PowerShell"
+        else
+            desktop_env="Command Prompt (or unknown Windows shell)"
         fi
     elif [ "$OS" = "MacOS" ]; then
         desktop_env="MacOS"
+    else
+        log "Unsupported operating system: $OS" ERROR
     fi
 
     log "Desktop Environment: $desktop_env" SYSTEM
