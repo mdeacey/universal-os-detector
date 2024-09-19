@@ -4,6 +4,8 @@ set -eo pipefail
 trap 'log "Error encountered at line ${LINENO:-unknown} while executing command: ${BASH_COMMAND:-unknown}" "ERROR"' ERR
 trap 'log "Received termination signal. Exiting." "WARN"; cleanup' SIGINT SIGTERM
 
+#### LOGGING
+
 LOG_FILE=${LOG_FILE:-~/universal-os-detector.log}
 
 CONSOLE_LOG_LEVEL=${console_log_level:-${CONSOLE_LOG_LEVEL:-1}}
@@ -62,6 +64,8 @@ log() {
     fi
 }
 
+#### LOGGING LEVEL VALIDATION
+
 lowercase() {
     echo "$1" | tr '[:upper:]' '[:lower:]'
 }
@@ -119,6 +123,8 @@ validate_console_log_level() {
     log "$log_level_message" INFO
 }
 
+#### FUNCTIONAL TESTS
+
 check_file_access() {
     local file=$1
     log "Checking file access for: $file..." INFO
@@ -162,6 +168,8 @@ function_tests() {
     check_file_access "$LOG_FILE" || exit 1
     log "All function tests passed." INFO
 }
+
+#### MAIN DETECTION LOGIC
 
 detect_container() {
     log "Detecting container environment..." INFO
@@ -374,6 +382,8 @@ detect_kernel() {
     log "Kernel: $KERNEL" SYSTEM
 }
 
+#### CLEANUP
+
 cleanup() {
     log "Cleaning up resources..." INFO
     log "Removing log file..." INFO
@@ -382,6 +392,8 @@ cleanup() {
     log "Exiting..." INFO
     exit 0
 }
+
+#### MAIN
 
 run_detection() {
     validate_console_log_level
