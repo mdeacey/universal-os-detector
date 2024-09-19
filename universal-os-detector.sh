@@ -106,7 +106,7 @@ validate_console_log_level() {
     esac
 
     CONSOLE_LOG_LEVEL="$level_numeric"
-    log_level_message="Console log level is set to: $level_text ($CONSOLE_LOG_LEVEL)"
+    log_level_message="Console log level is set to: $level_text [$CONSOLE_LOG_LEVEL]"
     log "$log_level_message" INFO
 }
 
