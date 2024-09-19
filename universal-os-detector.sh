@@ -125,21 +125,6 @@ validate_console_log_level() {
 
 #### FUNCTIONAL TESTS
 
-check_file_access() {
-    local file=$1
-    log "Checking file access for: $file..." INFO
-
-    if [ ! -f "$file" ]; then
-        log "File $file does not exist." ERROR
-        return 1
-    elif [ ! -r "$file" ]; then
-        log "File $file is not readable." ERROR
-        return 1
-    elif [ ! -w "$file" ]; then
-        log "File $file is not writable." WARN
-    fi
-}
-
 check_command() {
     local required_command="$1"
     local version_flag="${2:---version}"
@@ -159,14 +144,54 @@ check_command() {
     fi
 }
 
-function_tests() {
-    log "Running function tests..." INFO
+validate_log_file_access() {
+    log "Verifying READ/WRITE permissions for log file: $LOG_FILE..." INFO
+
+    if [ ! -f "$LOG_FILE" ]; then
+        log "File $LOG_FILE does not exist." ERROR
+        return 1
+    elif [ ! -r "$LOG_FILE" ]; then
+        log "File $LOG_FILE is not readable." ERROR
+        return 1
+    elif [ ! -w "$LOG_FILE" ]; then
+        log "File $LOG_FILE is not writable." WARN
+        return 1
+    fi
+
+    return 0
+}
+
+validate_log_dir_access() {
+    local log_dir=$(dirname "$LOG_FILE")
+    
+    log "Verifying READ/WRITE permissions for log file directory: $log_dir..." INFO
+    
+    if [ ! -d "$log_dir" ]; then
+        log "Directory $log_dir does not exist." ERROR
+        return 1
+    elif [ ! -r "$log_dir" ]; then
+        log "Directory $log_dir is not readable." ERROR
+        return 1
+    elif [ ! -w "$log_dir" ]; then
+        log "Directory $log_dir is not writable." ERROR
+        return 1
+    fi
+    
+    return 0
+}
+
+functional_tests() {
+    log "Running functional tests..." INFO
+
     log "Checking command availability..." INFO
     check_command "uname" || exit 1
     check_command "tr" || exit 1
     check_command "grep" || exit 1
-    check_file_access "$LOG_FILE" || exit 1
-    log "All function tests passed." INFO
+
+    validate_log_dir_access || exit 1
+    validate_log_file_access || exit 1
+
+    log "All functional tests passed." INFO
 }
 
 #### MAIN DETECTION LOGIC
@@ -398,7 +423,7 @@ cleanup() {
 run_detection() {
     validate_console_log_level
 
-    function_tests
+    functional_tests
 
     log "Starting detection..." INFO
 
