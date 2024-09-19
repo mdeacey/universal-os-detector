@@ -56,55 +56,53 @@ log() {
     esac
 }
 
+get_log_level() {
+    local input="$1"
+    local lower_case_input=$(lowercase "$input")
+
+    if [[ "$input" =~ ^[0-3]$ ]]; then
+        echo "$input"
+    else
+        case "$lower_case_input" in
+            none|n) echo 0 ;;
+            default|d) echo 1 ;;
+            verbose|v) echo 2 ;;
+            debug|deb) echo 3 ;;
+            *) echo -1 ;;
+        esac
+    fi
+}
+
+get_text_log_level() {
+    local level_numeric="$1"
+    case "$level_numeric" in
+        0) echo "NONE" ;;
+        1) echo "DEFAULT" ;;
+        2) echo "VERBOSE" ;;
+        3) echo "DEBUG" ;;
+        *) echo "UNKNOWN" ;;
+    esac
+}
+
+handle_invalid_log_level_error() {
+    local error_message="Error: Invalid CONSOLE_LOG_LEVEL. Please use one of the following valid options: N/NONE/0, D/DEFAULT/1, V/VERBOSE/2, or DEB/DEBUG/3."
+    echo -e "${COLOR_ERROR}$error_message${COLOR_RESET}" >&2
+    echo -e "$(date '+%Y-%m-%d %H:%M:%S') [UNKNOWN]: $error_message" >> "$LOG_FILE"
+    exit 1
+}
+
 validate_console_log_level() {
     local level_numeric
     local level_text
-    local error_message
     local log_level_message
-    local lower_case_level
 
-    lower_case_level=$(lowercase "$CONSOLE_LOG_LEVEL")
+    level_numeric=$(get_log_level "$CONSOLE_LOG_LEVEL")
 
-    case "$lower_case_level" in
-        none|n) 
-            level_numeric=0
-            level_text="NONE"
-            ;;
-        default|d) 
-            level_numeric=1
-            level_text="DEFAULT"
-            ;;
-        verbose|v) 
-            level_numeric=2
-            level_text="VERBOSE"
-            ;;
-        debug|deb) 
-            level_numeric=3
-            level_text="DEBUG"
-            ;;
-        ''|*[!0-3]*)
-            error_message="Error: Invalid CONSOLE_LOG_LEVEL. Please use one of the following valid options: N/NONE/0, D/DEFAULT/1, V/VERBOSE/2, or DEB/DEBUG/3."
-            echo -e "${COLOR_ERROR}$error_message${COLOR_RESET}" >&2
-            echo -e "$(date '+%Y-%m-%d %H:%M:%S') [UNKNOWN]: $error_message" >> "$LOG_FILE"
-            exit 1
-            ;;
-        *)
-            if [[ "$CONSOLE_LOG_LEVEL" =~ ^[0-3]$ ]]; then
-                level_numeric="$CONSOLE_LOG_LEVEL"
-                case "$level_numeric" in
-                    0) level_text="NONE" ;;
-                    1) level_text="DEFAULT" ;;
-                    2) level_text="VERBOSE" ;;
-                    3) level_text="DEBUG" ;;
-                esac
-            else
-                error_message="Error: Invalid CONSOLE_LOG_LEVEL. Please use one of the following valid options: N/NONE/0, D/DEFAULT/1, V/VERBOSE/2, or DEB/DEBUG/3."
-                echo -e "${COLOR_ERROR}$error_message${COLOR_RESET}" >&2
-                echo -e "$(date '+%Y-%m-%d %H:%M:%S') [UNKNOWN]: $error_message" >> "$LOG_FILE"
-                exit 1
-            fi
-            ;;
-    esac
+    if [[ "$level_numeric" -eq -1 ]]; then
+        handle_invalid_log_level_error
+    fi
+    
+    level_text=$(get_text_log_level "$level_numeric")
 
     CONSOLE_LOG_LEVEL="$level_numeric"
     log_level_message="Console log level is set to: $level_text [$CONSOLE_LOG_LEVEL]"
