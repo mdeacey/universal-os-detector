@@ -156,9 +156,11 @@ if [ "$os" = "Linux" ] && [[ "$distro_name" == *"Ubuntu"* ]]; then
 fi
 
 # Check for containerized environment
-if grep -qi 'docker\|lxc' /proc/1/cgroup 2>/dev/null; then
-    echo "Running inside a container. Adjusting behavior..."
-    # Add your container-specific adjustments here
+if [ "$container_status" = "docker" ]; then
+   echo "Running inside Docker container."
+   # Add Docker-specific commands here
+else
+   echo "Not running inside a container."
 fi
 
 # Use other detected information
