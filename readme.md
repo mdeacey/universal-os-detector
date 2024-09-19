@@ -1,15 +1,17 @@
 # Universal OS Detector
 
-Universal OS Detector is a Bash script designed to provide detailed information about the system it’s running on. It aims to detect a broad range of operating systems, system architectures, kernel versions, and container environments, ensuring compatibility with as many systems as possible. The script is built to run effectively across different systems, providing universal detection capabilities.
+Universal OS Detector is a Bash script designed to provide detailed information about the system it's running on. It aims to detect a broad range of operating systems, system architectures, kernel versions, desktop environments, and container environments, ensuring compatibility with as many systems as possible. The script is built to run effectively across different systems, providing universal detection capabilities.
 
 ## Features
 
-- Detects operating system
+- Detects operating system and version/distribution
 - Identifies system architecture
 - Reports kernel version
+- Detects desktop environment
 - Checks for container environments (Docker, LXC, OpenVZ)
-- Comprehensive logging with color-coded output
+- Comprehensive logging with color-coded output and configurable log levels
 - Error handling and cleanup procedures
+- Functional tests to ensure script dependencies are met
 
 ## Installation
 
@@ -29,7 +31,8 @@ Run the script with:
 
 The script provides information about:
 - Container environment (if applicable)
-- Operating System
+- Operating System and Version/Distribution
+- Desktop Environment
 - System Architecture
 - Kernel Version
 
@@ -39,36 +42,58 @@ When run without any options, the script outputs only the system information:
 
 ```
 $ ./universal-os-detector.sh
-2024-09-17 14:14:15 [SYSTEM]: Not running inside a container
-2024-09-17 14:14:15 [SYSTEM]: Operating System: MacOS
-2024-09-17 14:14:15 [SYSTEM]: Architecture: x86_64 (64-bit)
-2024-09-17 14:14:15 [SYSTEM]: Kernel: 23.6.0
+2024-09-19 14:14:15 [system]: Not running inside a container
+2024-09-19 14:14:15 [system]: Operating System: MacOS
+2024-09-19 14:14:15 [system]: Version: 14.0 (Sonoma)
+2024-09-19 14:14:15 [system]: Desktop Environment: MacOS
+2024-09-19 14:14:15 [system]: Architecture: x86_64 (64-bit)
+2024-09-19 14:14:15 [system]: Kernel: 23.6.0
 ```
 
-### Debug Mode
+### Configurable Log Levels
 
-Enable debug mode to see detailed logging of the script's operations:
+You can set the console log level using the `console_log_level` environment variable:
 
 ```
-$ DEBUG_MODE=1 ./universal-os-detector.sh
-2024-09-17 13:57:24 [INFO]: Running function tests...
-2024-09-17 13:57:24 [INFO]: Checking command availability...
-2024-09-17 13:57:24 [INFO]: Checking file access for: /Users/admin/universal-os-detector.log...
-2024-09-17 13:57:24 [INFO]: All function tests passed.
-2024-09-17 13:57:24 [INFO]: Starting detection...
-2024-09-17 13:57:24 [INFO]: Detecting container environment...
-2024-09-17 13:57:24 [SYSTEM]: Not running inside a container
-2024-09-17 13:57:24 [INFO]: Detecting operating system...
-2024-09-17 13:57:24 [SYSTEM]: Operating System: MacOS
-2024-09-17 13:57:24 [INFO]: Detecting architecture...
-2024-09-17 13:57:24 [SYSTEM]: Architecture: x86_64 (64-bit)
-2024-09-17 13:57:24 [INFO]: Detecting kernel version...
-2024-09-17 13:57:24 [SYSTEM]: Kernel: 23.6.0
-2024-09-17 13:57:24 [INFO]: Detection completed.
-2024-09-17 13:57:24 [INFO]: Cleaning up resources...
-2024-09-17 13:57:24 [INFO]: Removing log file...
-2024-09-17 13:57:24 [INFO]: Cleanup completed
-2024-09-17 13:57:24 [INFO]: Exiting...
+console_log_level=3 ./universal-os-detector.sh
+```
+
+Log levels:
+- 0 or n/none: No console output
+- 1 or d/default: system, warn, and error messages (default)
+- 2 or v/verbose: system, warn, error, and info messages
+- 3 or deb/debug: All messages, including debug
+
+### Verbose Log Level Example
+
+Here's an example of running the script with verbose logging (console_log_level=2):
+
+```
+$ console_log_level=2 ./universal-os-detector.sh
+2024-09-19 15:30:10 [info]: Console log level is set to: VERBOSE [2]
+2024-09-19 15:30:10 [info]: Running functional tests...
+2024-09-19 15:30:10 [info]: Checking command availability...
+2024-09-19 15:30:10 [info]: Verifying READ/WRITE permissions for log file directory: /home/user...
+2024-09-19 15:30:10 [info]: Verifying READ/WRITE permissions for log file: /home/user/universal-os-detector.log...
+2024-09-19 15:30:10 [info]: All functional tests passed.
+2024-09-19 15:30:10 [info]: Starting detection...
+2024-09-19 15:30:10 [info]: Detecting container environment...
+2024-09-19 15:30:10 [system]: Not running inside a container
+2024-09-19 15:30:10 [info]: Detecting operating system...
+2024-09-19 15:30:10 [system]: Operating System: Linux
+2024-09-19 15:30:10 [info]: Detecting version or distribution...
+2024-09-19 15:30:10 [system]: Distribution: Ubuntu 22.04 LTS
+2024-09-19 15:30:10 [info]: Detecting desktop environment...
+2024-09-19 15:30:10 [system]: Desktop Environment: GNOME
+2024-09-19 15:30:10 [info]: Detecting architecture...
+2024-09-19 15:30:10 [system]: Architecture: x86_64 (64-bit)
+2024-09-19 15:30:10 [info]: Detecting kernel version...
+2024-09-19 15:30:10 [system]: Kernel: 5.15.0-79-generic
+2024-09-19 15:30:10 [info]: Detection completed.
+2024-09-19 15:30:10 [info]: Cleaning up resources...
+2024-09-19 15:30:10 [info]: Removing log file...
+2024-09-19 15:30:10 [info]: Cleanup completed
+2024-09-19 15:30:10 [info]: Exiting...
 ```
 
 ### Custom Log File
@@ -79,7 +104,7 @@ Specify a custom log file path:
 LOG_FILE=/path/to/custom.log ./universal-os-detector.sh
 ```
 
-Output is logged to the specified log file and, depending on the debug mode, displayed in the console with color-coded messages for different log levels.
+Output is logged to the log file regardless of the console logging level. Read and write access to the directory and path of the specified log file are checked to ensure that the directory exists and the script has the necessary permissions to create and modify it.
 
 ## Integrating with Other Scripts
 
@@ -96,6 +121,53 @@ source <(wget -qO- https://raw.githubusercontent.com/mdeacey/universal-os-detect
 ```
 
 This command fetches the script from GitHub, sources it, and executes the `run_detection` function, which performs all detection operations and logs the results.
+
+### Example: Using Detection Results in Your Script
+
+Here's an example of how you can use the detection results in your own script:
+
+```bash
+#!/bin/bash
+
+# Source the Universal OS Detector script
+source <(curl -sL https://raw.githubusercontent.com/mdeacey/universal-os-detector/main/universal-os-detector.sh)
+
+# Run the detection
+run_detection
+
+# Use the detection results
+if [ "$os" = "Linux" ]; then
+    echo "This is a Linux system. Running Linux-specific commands..."
+    # Add your Linux-specific commands here
+elif [ "$os" = "MacOS" ]; then
+    echo "This is a MacOS system. Running MacOS-specific commands..."
+    # Add your MacOS-specific commands here
+elif [ "$os" = "Windows" ]; then
+    echo "This is a Windows system. Running Windows-specific commands..."
+    # Add your Windows-specific commands here
+else
+    echo "Unknown operating system: $os"
+fi
+
+# Check for specific distributions
+if [ "$os" = "Linux" ] && [[ "$distro_name" == *"Ubuntu"* ]]; then
+    echo "This is an Ubuntu system. Running Ubuntu-specific commands..."
+    # Add your Ubuntu-specific commands here
+fi
+
+# Check for containerized environment
+if grep -qi 'docker\|lxc' /proc/1/cgroup 2>/dev/null; then
+    echo "Running inside a container. Adjusting behavior..."
+    # Add your container-specific adjustments here
+fi
+
+# Use other detected information
+echo "System architecture: $arch"
+echo "Kernel version: $kernel"
+echo "Desktop environment: $desktop_env"
+```
+
+This example shows how you can use the variables set by the Universal OS Detector to make decisions in your script based on the detected system information.
 
 ## Requirements
 
