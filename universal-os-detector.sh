@@ -2,6 +2,7 @@
 
 set -eo pipefail
 trap 'log "Error encountered at line ${LINENO:-unknown} while executing command: ${BASH_COMMAND:-unknown}" "ERROR"' ERR
+trap 'log "Received termination signal. Exiting." "WARN"; cleanup' SIGINT SIGTERM
 
 LOG_FILE=${LOG_FILE:-~/universal-os-detector.log}
 DEBUG_MODE=${DEBUG_MODE:-0}
@@ -14,8 +15,6 @@ cleanup() {
     log "Exiting..." INFO
     exit 0
 }
-
-trap 'log "Received termination signal. Exiting." "WARN"; cleanup' SIGINT SIGTERM
 
 log() {
     local message="${1:-}"
