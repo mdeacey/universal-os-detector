@@ -83,6 +83,16 @@ lowercase() {
     echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
+function_tests() {
+    log "Running function tests..." INFO
+    log "Checking command availability..." INFO
+    check_command "uname" || exit 1
+    check_command "tr" || exit 1
+    check_command "grep" || exit 1
+    check_file_access "$LOG_FILE" || exit 1
+    log "All function tests passed." INFO
+}
+
 detect_container() {
     log "Detecting container environment..." INFO
     if [ -f /.dockerenv ]; then
@@ -112,90 +122,6 @@ detect_os() {
     esac
 
     log "Operating System: $OS" SYSTEM
-}
-
-detect_arch() {
-    log "Detecting architecture..." INFO
-    ARCH=$(uname -m || echo "Unknown architecture")
-
-    case "$ARCH" in
-        x86_64) ARCH="x86_64 (64-bit)" ;;
-        i*86) ARCH="x86 (32-bit)" ;;
-        armv6l|armv7l) ARCH="ARM (32-bit)" ;;
-        aarch64) ARCH="ARM (64-bit)" ;;
-        ppc64le) ARCH="PowerPC 64-bit (little-endian)" ;;
-        riscv64) ARCH="RISC-V (64-bit)" ;;
-        *) ARCH="Unknown Architecture" log "Unknown architecture detected: $ARCH" WARN ;;
-    esac
-
-    log "Architecture: $ARCH" SYSTEM
-}
-
-detect_kernel() {
-    log "Detecting kernel version..." INFO
-    KERNEL=$(uname -r || echo "Unknown kernel")
-
-    log "Kernel: $KERNEL" SYSTEM
-}
-
-detect_desktop_env() {
-    log "Detecting desktop environment..." INFO
-    local desktop_env="Unknown desktop environment"
-
-    if [ "$OS" = "Linux" ]; then
-        if [ -n "$XDG_CURRENT_DESKTOP" ]; then
-            desktop_env="$XDG_CURRENT_DESKTOP"
-        elif [ -n "$DESKTOP_SESSION" ]; then
-            desktop_env="$DESKTOP_SESSION"
-        elif [ -n "$GDMSESSION" ]; then
-            desktop_env="$GDMSESSION"
-        else
-            if command -v kdialog &>/dev/null; then
-                desktop_env="KDE"
-            elif command -v gnome-session &>/dev/null; then
-                desktop_env="GNOME"
-            elif command -v xfce4-session &>/dev/null; then
-                desktop_env="Xfce"
-            elif command -v mate-session &>/dev/null; then
-                desktop_env="MATE"
-            elif command -v cinnamon-session &>/dev/null; then
-                desktop_env="Cinnamon"
-            elif command -v lxsession &>/dev/null; then
-                if command -v lxqt-session &>/dev/null; then
-                    desktop_env="LXQt"
-                else
-                    desktop_env="LXDE"
-                fi
-            elif command -v pantheon-session &>/dev/null; then
-                desktop_env="Pantheon"
-            elif command -v enlightenment_start &>/dev/null; then
-                desktop_env="Enlightenment"
-            elif command -v deepin-session &>/dev/null; then
-                desktop_env="Deepin"
-            else
-                desktop_env="Unknown Linux desktop environment"
-                log "No known desktop Linux environment binaries found." WARN
-            fi
-        fi
-    elif [ "$OS" = "Windows" ]; then
-        if grep -qi microsoft /proc/version 2>/dev/null; then
-            desktop_env="WSL (Windows Subsystem for Linux)"
-        elif [[ "$OSTYPE" == "msys"* ]]; then
-            desktop_env="Git Bash"
-        elif [[ "$OSTYPE" == "cygwin"* ]]; then
-            desktop_env="Cygwin"
-        elif command -v powershell.exe &>/dev/null; then
-            desktop_env="PowerShell"
-        else
-            desktop_env="Command Prompt (or unknown Windows shell)"
-        fi
-    elif [ "$OS" = "MacOS" ]; then
-        desktop_env="MacOS"
-    else
-        log "Unsupported operating system: $OS" ERROR
-    fi
-
-    log "Desktop Environment: $desktop_env" SYSTEM
 }
 
 detect_version() {
@@ -294,14 +220,88 @@ detect_version() {
     esac
 }
 
-function_tests() {
-    log "Running function tests..." INFO
-    log "Checking command availability..." INFO
-    check_command "uname" || exit 1
-    check_command "tr" || exit 1
-    check_command "grep" || exit 1
-    check_file_access "$LOG_FILE" || exit 1
-    log "All function tests passed." INFO
+detect_desktop_env() {
+    log "Detecting desktop environment..." INFO
+    local desktop_env="Unknown desktop environment"
+
+    if [ "$OS" = "Linux" ]; then
+        if [ -n "$XDG_CURRENT_DESKTOP" ]; then
+            desktop_env="$XDG_CURRENT_DESKTOP"
+        elif [ -n "$DESKTOP_SESSION" ]; then
+            desktop_env="$DESKTOP_SESSION"
+        elif [ -n "$GDMSESSION" ]; then
+            desktop_env="$GDMSESSION"
+        else
+            if command -v kdialog &>/dev/null; then
+                desktop_env="KDE"
+            elif command -v gnome-session &>/dev/null; then
+                desktop_env="GNOME"
+            elif command -v xfce4-session &>/dev/null; then
+                desktop_env="Xfce"
+            elif command -v mate-session &>/dev/null; then
+                desktop_env="MATE"
+            elif command -v cinnamon-session &>/dev/null; then
+                desktop_env="Cinnamon"
+            elif command -v lxsession &>/dev/null; then
+                if command -v lxqt-session &>/dev/null; then
+                    desktop_env="LXQt"
+                else
+                    desktop_env="LXDE"
+                fi
+            elif command -v pantheon-session &>/dev/null; then
+                desktop_env="Pantheon"
+            elif command -v enlightenment_start &>/dev/null; then
+                desktop_env="Enlightenment"
+            elif command -v deepin-session &>/dev/null; then
+                desktop_env="Deepin"
+            else
+                desktop_env="Unknown Linux desktop environment"
+                log "No known desktop Linux environment binaries found." WARN
+            fi
+        fi
+    elif [ "$OS" = "Windows" ]; then
+        if grep -qi microsoft /proc/version 2>/dev/null; then
+            desktop_env="WSL (Windows Subsystem for Linux)"
+        elif [[ "$OSTYPE" == "msys"* ]]; then
+            desktop_env="Git Bash"
+        elif [[ "$OSTYPE" == "cygwin"* ]]; then
+            desktop_env="Cygwin"
+        elif command -v powershell.exe &>/dev/null; then
+            desktop_env="PowerShell"
+        else
+            desktop_env="Command Prompt (or unknown Windows shell)"
+        fi
+    elif [ "$OS" = "MacOS" ]; then
+        desktop_env="MacOS"
+    else
+        log "Unsupported operating system: $OS" ERROR
+    fi
+
+    log "Desktop Environment: $desktop_env" SYSTEM
+}
+
+detect_arch() {
+    log "Detecting architecture..." INFO
+    ARCH=$(uname -m || echo "Unknown architecture")
+
+    case "$ARCH" in
+        x86_64) ARCH="x86_64 (64-bit)" ;;
+        i*86) ARCH="x86 (32-bit)" ;;
+        armv6l|armv7l) ARCH="ARM (32-bit)" ;;
+        aarch64) ARCH="ARM (64-bit)" ;;
+        ppc64le) ARCH="PowerPC 64-bit (little-endian)" ;;
+        riscv64) ARCH="RISC-V (64-bit)" ;;
+        *) ARCH="Unknown Architecture" log "Unknown architecture detected: $ARCH" WARN ;;
+    esac
+
+    log "Architecture: $ARCH" SYSTEM
+}
+
+detect_kernel() {
+    log "Detecting kernel version..." INFO
+    KERNEL=$(uname -r || echo "Unknown kernel")
+
+    log "Kernel: $KERNEL" SYSTEM
 }
 
 run_detection() {
