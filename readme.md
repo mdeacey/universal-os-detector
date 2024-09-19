@@ -184,7 +184,7 @@ Contributions to improve the Universal OS Detector are welcome. Please feel free
 
 MIT License
 
-Copyright (c) [2024] [Marcus Deacey]
+Copyright (c) 2024 Marcus Deacey
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
