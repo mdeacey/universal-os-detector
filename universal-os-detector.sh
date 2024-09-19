@@ -14,6 +14,10 @@ COLOR_SYSTEM='\033[0;37m'
 COLOR_RESET='\033[0m'
 COLOR_DEBUG='\033[0;36m'
 
+lowercase() {
+    echo "$1" | tr '[:upper:]' '[:lower:]'
+}
+
 log() {
     local message="${1:-}"
     local level="${2:-INFO}"
@@ -32,40 +36,78 @@ log() {
     echo -e "$current_time [$level]: $message" >> "$LOG_FILE"
 
     case "$CONSOLE_LOG_LEVEL" in
-        0)  # NONE
-            return
+        0)  return
             ;;
-        1)  # DEFAULT
-            if [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" ]]; then
+        1)  if [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" ]]; then
                 echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
             fi
             ;;
-        2)  # VERBOSE
-            if [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]]; then
+        2)  if [[ "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]]; then
                 echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
             fi
             ;;
-        3)  # DEBUGGING
-            if [[ "$level" == "DEBUG" || "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]]; then
+        3)  if [[ "$level" == "DEBUG" || "$level" == "SYSTEM" || "$level" == "WARN" || "$level" == "ERROR" || "$level" == "INFO" ]]; then
                 echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
             fi
             ;;
-        *)
-            return
+        *)  echo -e "${COLOR_ERROR}Error: Invalid CONSOLE_LOG_LEVEL${COLOR_RESET}"
             ;;
     esac
 }
 
 validate_console_log_level() {
-    local log_level_message="Console log level is set to: $CONSOLE_LOG_LEVEL"
-    log "$log_level_message" INFO
+    local level_numeric
+    local level_text
+    local error_message
+    local log_level_message
+    local lower_case_level
 
-    if [[ ! "$CONSOLE_LOG_LEVEL" =~ ^[0-3]$ ]]; then
-        local error_message="Error: Invalid CONSOLE_LOG_LEVEL. It must be between 0 and 3."
-        echo -e "${COLOR_ERROR}$error_message${COLOR_RESET}" >&2
-        echo -e "$current_time [UNKNOWN]: $error_message" >> "$LOG_FILE"
-        exit 1
-    fi
+    lower_case_level=$(lowercase "$CONSOLE_LOG_LEVEL")
+
+    case "$lower_case_level" in
+        none|n) 
+            level_numeric=0
+            level_text="NONE"
+            ;;
+        default|d) 
+            level_numeric=1
+            level_text="DEFAULT"
+            ;;
+        verbose|v) 
+            level_numeric=2
+            level_text="VERBOSE"
+            ;;
+        debug|deb) 
+            level_numeric=3
+            level_text="DEBUG"
+            ;;
+        ''|*[!0-3]*)
+            error_message="Error: Invalid CONSOLE_LOG_LEVEL. Please use one of the following valid options: N/NONE/0, D/DEFAULT/1, V/VERBOSE/2, or DEB/DEBUG/3."
+            echo -e "${COLOR_ERROR}$error_message${COLOR_RESET}" >&2
+            echo -e "$(date '+%Y-%m-%d %H:%M:%S') [UNKNOWN]: $error_message" >> "$LOG_FILE"
+            exit 1
+            ;;
+        *)
+            if [[ "$CONSOLE_LOG_LEVEL" =~ ^[0-3]$ ]]; then
+                level_numeric="$CONSOLE_LOG_LEVEL"
+                case "$level_numeric" in
+                    0) level_text="NONE" ;;
+                    1) level_text="DEFAULT" ;;
+                    2) level_text="VERBOSE" ;;
+                    3) level_text="DEBUG" ;;
+                esac
+            else
+                error_message="Error: Invalid CONSOLE_LOG_LEVEL. Please use one of the following valid options: N/NONE/0, D/DEFAULT/1, V/VERBOSE/2, or DEB/DEBUG/3."
+                echo -e "${COLOR_ERROR}$error_message${COLOR_RESET}" >&2
+                echo -e "$(date '+%Y-%m-%d %H:%M:%S') [UNKNOWN]: $error_message" >> "$LOG_FILE"
+                exit 1
+            fi
+            ;;
+    esac
+
+    CONSOLE_LOG_LEVEL="$level_numeric"
+    log_level_message="Console log level is set to: $level_text ($CONSOLE_LOG_LEVEL)"
+    log "$log_level_message" INFO
 }
 
 check_file_access() {
@@ -100,10 +142,6 @@ check_command() {
             return 1
         fi
     fi
-}
-
-lowercase() {
-    echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
 function_tests() {
