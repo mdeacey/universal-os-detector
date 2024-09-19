@@ -159,8 +159,6 @@ fi
 if [ "$container_status" = "docker" ]; then
    echo "Running inside Docker container."
    # Add Docker-specific commands here
-else
-   echo "Not running inside a container."
 fi
 
 # Use other detected information
