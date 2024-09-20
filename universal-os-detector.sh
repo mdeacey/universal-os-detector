@@ -363,6 +363,15 @@ detect_version() {
         Solaris)
             detect_solaris_version
             ;;
+        Android)
+            detect_android_version
+            ;;
+        iOS)
+            detect_ios_version
+            ;;
+        AIX)
+            detect_aix_version
+            ;;
         *)
             log "No version name available for $os" info
             ;;
@@ -465,6 +474,49 @@ detect_solaris_version() {
         log "Unable to detect Solaris version" warn
     fi
     log "Solaris Version: $sol_info" system
+}
+
+detect_android_version() {
+    if command -v getprop &>/dev/null; then
+        android_version=$(getprop ro.build.version.release)
+        android_codename=$(getprop ro.build.version.codename)
+        android_device=$(getprop ro.product.model)
+        if [[ -z "$android_version" ]]; then
+            log "Unknown Android version" warn
+        else
+            log "Android Version: $android_version ($android_codename), Device: $android_device" system
+        fi
+    else
+        log "Command 'getprop' not found. Unable to detect Android version." error
+    fi
+}
+
+detect_ios_version() {
+    if command -v ideviceinfo &>/dev/null; then
+        ios_version=$(ideviceinfo -k ProductVersion)
+        ios_device=$(ideviceinfo -k ProductType)
+        ios_name="iOS"
+        if [[ -z "$ios_version" ]]; then
+            log "Unknown iOS version" warn
+        else
+            log "iOS Version: $ios_version, Device: $ios_device" system
+        fi
+    else
+        log "Command 'ideviceinfo' not found. Unable to detect iOS version." error
+    fi
+}
+
+detect_aix_version() {
+    if command -v oslevel &>/dev/null; then
+        aix_version=$(oslevel)
+        if [[ -z "$aix_version" ]]; then
+            log "Unknown AIX version" warn
+        else
+            log "AIX Version: $aix_version" system
+        fi
+    else
+        log "Command 'oslevel' not found. Unable to detect AIX version." error
+    fi
 }
 
 #### DESKTOP ENV
