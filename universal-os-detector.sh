@@ -610,7 +610,15 @@ detect_arch() {
         aarch64) arch="ARM (64-bit)" ;;
         ppc64le) arch="PowerPC 64-bit (little-endian)" ;;
         riscv64) arch="RISC-V (64-bit)" ;;
-        *) arch="Unknown Architecture" log "Unknown architecture detected: $arch" warn ;;
+        arm*)
+            if [[ "$OSTYPE" == "darwin"* ]]; then
+                arch="iOS (ARM)"
+            else
+                arch="Android (ARM)"
+            fi ;;
+        rs6000) arch="AIX (PowerPC)" ;;
+        *) arch="Unknown Architecture" 
+           log "Unknown architecture detected: $arch" warn ;;
     esac
 
     log "Architecture: $arch" system
