@@ -289,11 +289,20 @@ detect_linux_os() {
 }
 
 detect_windows_os() {
-    if grep -qi microsoft /proc/version 2>/dev/null || 
-       [[ -f "/proc/sys/kernel/osrelease" && "$(grep -qi 'wsl' /proc/sys/kernel/osrelease)" ]]; then
-        os="WSL"
-    else
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        if [[ -f "/proc/sys/kernel/osrelease" ]] && grep -qi 'wsl' /proc/sys/kernel/osrelease; then
+            os="WSL"
+        else
+            os="Windows"
+        fi
+    elif [[ -f "/proc/version" && "$(grep -qi 'cygwin' /proc/version)" ]]; then
+        os="Cygwin"
+    elif [[ -f "/proc/version" && "$(grep -qi 'mingw' /proc/version)" ]]; then
+        os="MinGW"
+    elif [[ -n "$WINDIR" ]]; then
         os="Windows"
+    else
+        os="Windows (Unknown Version)"
     fi
 }
 
