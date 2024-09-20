@@ -204,27 +204,26 @@ functional_tests() {
 detect_container() {
     log "Detecting container environment..." info
 
+    container=false
+    container_name="None"
+
     if [ -f /.dockerenv ]; then
-        container="Docker"
+        container_name="Docker"
     elif grep -q 'libpod' /proc/1/cgroup 2>/dev/null; then
-        container="Podman"
+        container_name="Podman"
     elif grep -q '/kubepods' /proc/1/cgroup 2>/dev/null; then
-        container="Kubernetes"
+        container_name="Kubernetes"
     elif grep -q 'lxc' /proc/1/cgroup 2>/dev/null; then
-        container="LXC"
+        container_name="LXC"
     elif grep -q 'VxID' /proc/self/status 2>/dev/null; then
-        container="OpenVZ"
+        container_name="OpenVZ"
     elif grep -q 'docker\|containerd\|lxc' /proc/1/cgroup 2>/dev/null; then
-        container="Generic Container"
-    else
-        container="None"
+        container_name="Generic Container"
     fi
 
-    if [ "$container" != "None" ]; then
-        log "Container Environment: $container" system
-    else
-        log "Container Environment: None" system
-    fi
+    [ "$container_name" != "None" ] && container=true
+
+    log "Container Environment: $container_name" system
 }
 
 #### OS
