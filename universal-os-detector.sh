@@ -231,101 +231,115 @@ detect_container() {
 
 detect_os() {
     log "Detecting operating system..." info
-    ostype=$(uname || echo "Unknown OS")
     os=""
+    
+    os_detection_functions=("detect_linux_os" "detect_windows_os" "detect_macos_os" "detect_freebsd_os" 
+                             "detect_android_os" "detect_ios_os" "detect_solaris_os" "detect_aix_os")
+    
+    for detect_fn in "${os_detection_functions[@]}"; do
+        if $detect_fn; then
+            log "Operating System: $os" system
+            return
+        fi
+    done
 
-    case "$(lowercase "$ostype")" in
-        linux*)
-            detect_linux_os
-            ;;
-        cygwin*|msys*|mingw*)
-            detect_windows_os
-            ;;
-        darwin*)
-            os="MacOS"
-            ;;
-        iphone*|ipad*)
-            os="iOS"
-            ;;
-        android*)
-            os="Android"
-            ;;
-        freebsd*)
-            os="FreeBSD"
-            ;;
-        solaris*)
-            os="Solaris"
-            ;;
-        aix*)
-            os="AIX"
-            ;;
-        *)
-            fallback_checks
-            ;;
-    esac
-
-    log "Operating System: $os" system
+    log "OS detection failed, no known OS detected" warn
+    os="Unknown"
+    log "Operating System: ${os:-Unknown}" system
 }
 
 detect_linux_os() {
-    if [[ -f "/etc/os-release" ]]; then
-        os=$(grep '^NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
-    elif command -v lsb_release &>/dev/null; then
-        os=$(lsb_release -si)
-    elif [[ -f "/etc/lsb-release" ]]; then
-        os=$(grep '^DISTRIB_ID=' /etc/lsb-release | cut -d= -f2)
-    elif [[ -f "/etc/debian_version" ]]; then
-        os="Debian"
-    elif [[ -f "/etc/redhat-release" ]]; then
-        os="Red Hat"
-    elif [[ -f "/etc/arch-release" ]]; then
-        os="Arch Linux"
-    elif [[ -f "/etc/SuSE-release" || -f "/etc/os-release" ]]; then
-        os="SUSE"
-    elif [[ -f "/etc/void-release" ]]; then
-        os="Void Linux"
-    elif [[ -f "/etc/gentoo-release" ]]; then
-        os="Gentoo"
-    else
-        os="Linux (Unknown Distro)"
+    if [[ "$(uname -s)" == "Linux" ]] || 
+       grep -qi "linux" /proc/version 2>/dev/null || 
+       [[ "$(cat /proc/sys/kernel/ostype 2>/dev/null)" == "Linux" ]] || 
+       [[ -d /sys/module ]]; then
+        os="Linux"
+        return 0
     fi
+    return 1
 }
 
 detect_windows_os() {
-    if grep -qi microsoft /proc/version 2>/dev/null; then
-        if [[ -f "/proc/sys/kernel/osrelease" ]] && grep -qi 'wsl' /proc/sys/kernel/osrelease; then
-            os="WSL"
-        else
-            os="Windows"
-        fi
-    elif [[ -f "/proc/version" && "$(grep -qi 'cygwin' /proc/version)" ]]; then
-        os="Cygwin"
-    elif [[ -f "/proc/version" && "$(grep -qi 'mingw' /proc/version)" ]]; then
-        os="MinGW"
-    elif [[ -n "$WINDIR" ]]; then
+    if [[ "$(uname -s)" == *"NT"* ]] || 
+       [[ -n "$WINDIR" ]] || 
+       grep -qi microsoft /proc/version 2>/dev/null; then
         os="Windows"
-    else
-        os="Windows (Unknown Version)"
+        return 0
+    elif [[ "$(uname -r)" == *"WSL"* ]] || 
+         [[ -f "/proc/version" && $(grep -qi 'wsl' /proc/version) ]]; then
+        os="WSL"
+        return 0
+    elif [[ "$(uname -s)" == *"CYGWIN"* ]] || 
+         [[ -f "/proc/version" && $(grep -qi 'cygwin' /proc/version) ]]; then
+        os="Cygwin"
+        return 0
+    elif [[ "$(uname -s)" == *"MINGW"* ]] || 
+         [[ -f "/proc/version" && $(grep -qi 'mingw' /proc/version) ]]; then
+        os="MinGW"
+        return 0
     fi
+    return 1
 }
 
-fallback_checks() {
-    if [[ -f "/proc/version" && $(grep -qi "android" /proc/version) ]]; then
-        os="Android"
-    elif [[ -f "/system/build.prop" || -f "/data/system/packages.xml" || 
-            "$(uname -o)" == "Android" || 
-            (-d "/system" && -d "/vendor") ]]; then
-        os="Android"
-    elif [[ -d "/var/mobile" || 
-            -f "/System/Library/CoreServices/SystemVersion.plist" || 
-            -f "/usr/bin/ideviceinfo" ]]; then
-        os="iOS"
-    elif [[ -f "/etc/release" ]]; then
-        os=$(head -n 1 /etc/release)
-    else
-        os="Unknown"
-        log "Unknown OS detected, using fallback method" warn
+detect_macos_os() {
+    if [[ "$(uname)" == "Darwin" ]] || 
+       [[ -d /System/Library/CoreServices ]] || 
+       [[ -f /System/Library/CoreServices/SystemVersion.plist ]]; then
+        os="MacOS"
+        return 0
     fi
+    return 1
+}
+
+detect_freebsd_os() {
+    if [[ "$(uname -s)" == "FreeBSD" ]] || 
+       [[ -f /bin/freebsd-version ]] || 
+       [[ -d /boot/kernel ]]; then
+        os="FreeBSD"
+        return 0
+    fi
+    return 1
+}
+
+detect_android_os() {
+    if [[ "$(uname -o 2>/dev/null)" == "Android" ]] || 
+       [[ -f "/system/build.prop" || -f "/data/system/packages.xml" ]] || 
+       [[ -d "/system" && -d "/data" ]] || 
+       [[ "$(getprop ro.build.version.release 2>/dev/null)" ]]; then
+        os="Android"
+        return 0
+    fi
+    return 1
+}
+
+detect_ios_os() {
+    if [[ "$(uname -s)" == "Darwin" && -d "/var/mobile" ]] || 
+       [[ -f "/System/Library/CoreServices/SystemVersion.plist" ]] || 
+       [[ -f "/usr/bin/ideviceinfo" ]]; then
+        os="iOS"
+        return 0
+    fi
+    return 1
+}
+
+detect_solaris_os() {
+    if [[ "$(uname -s)" == "SunOS" ]] || 
+       [[ -d "/usr/sbin" && -d "/usr/bin" ]] || 
+       [[ -f "/etc/release" ]]; then
+        os="Solaris"
+        return 0
+    fi
+    return 1
+}
+
+detect_aix_os() {
+    if [[ "$(uname -s)" == "AIX" ]] || 
+       [[ -f "/etc/os-release" && $(grep -qi "aix" /etc/os-release) ]] || 
+       [[ -f "/etc/vmlinux" ]]; then
+        os="AIX"
+        return 0
+    fi
+    return 1
 }
 
 #### VERSION
