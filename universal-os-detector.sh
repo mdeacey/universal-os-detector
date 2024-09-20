@@ -228,22 +228,27 @@ detect_container() {
 
 detect_os() {
     log "Detecting operating system..." info
-    os=$(uname || echo "Unknown OS")
-    ostype="${ostype:-$(uname)}"
+    ostype=$(uname || echo "Unknown OS")
+    os=""
 
     case "$(lowercase "$ostype")" in
-        darwin*)
-            os="MacOS"
-            detect_ios_os
-            ;;
         linux*)
-            detect_linux_os || detect_android_os
-            ;;
-        freebsd*)
-            os="FreeBSD"
+            detect_linux_os
             ;;
         cygwin*|msys*|mingw*)
             detect_windows_os
+            ;;
+        darwin*)
+            os="MacOS"
+            ;;
+        iphone*|ipad*)
+            os="iOS"
+            ;;
+        android*)
+            os="Android"
+            ;;
+        freebsd*)
+            os="FreeBSD"
             ;;
         solaris*)
             os="Solaris"
@@ -259,49 +264,33 @@ detect_os() {
     log "Operating System: $os" system
 }
 
-detect_ios_os() {
-    case "$(uname -m)" in
-        iPhone*|iPad*) 
-            os="iOS" 
-            ;;
-        *)  
-            if [[ -d "/var/mobile" ]] || 
-               [[ -f "/System/Library/CoreServices/SystemVersion.plist" ]] || 
-               [[ -f "/usr/bin/ideviceinfo" ]]; then
-                os="iOS"
-            fi
-            ;;
-    esac
-}
-
-detect_android_os() {
-    if [[ -f "/system/build.prop" ]]; then
-        os="Android"
-        return 0
-    fi
-    return 1
-}
-
 detect_linux_os() {
     if [[ -f "/etc/os-release" ]]; then
-        os=$(grep '^NAME=' /etc/os-release | sed -e 's/^NAME=//' -e 's/"//g')
-    elif [[ -x "$(command -v lsb_release)" ]]; then
+        os=$(grep '^NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    elif command -v lsb_release &>/dev/null; then
         os=$(lsb_release -si)
     elif [[ -f "/etc/lsb-release" ]]; then
-        os=$(grep '^DISTRIB_ID=' /etc/lsb-release | sed -e 's/^DISTRIB_ID=//')
+        os=$(grep '^DISTRIB_ID=' /etc/lsb-release | cut -d= -f2)
     elif [[ -f "/etc/debian_version" ]]; then
         os="Debian"
     elif [[ -f "/etc/redhat-release" ]]; then
         os="Red Hat"
+    elif [[ -f "/etc/arch-release" ]]; then
+        os="Arch Linux"
+    elif [[ -f "/etc/SuSE-release" || -f "/etc/os-release" ]]; then
+        os="SUSE"
+    elif [[ -f "/etc/void-release" ]]; then
+        os="Void Linux"
+    elif [[ -f "/etc/gentoo-release" ]]; then
+        os="Gentoo"
     else
         os="Linux (Unknown Distro)"
     fi
 }
 
 detect_windows_os() {
-    if grep -qi microsoft /proc/version 2>/dev/null; then
-        os="WSL"
-    elif [[ -f "/proc/sys/kernel/osrelease" ]] && grep -qi 'wsl' /proc/sys/kernel/osrelease; then
+    if grep -qi microsoft /proc/version 2>/dev/null || 
+       [[ -f "/proc/sys/kernel/osrelease" && "$(grep -qi 'wsl' /proc/sys/kernel/osrelease)" ]]; then
         os="WSL"
     else
         os="Windows"
@@ -309,10 +298,16 @@ detect_windows_os() {
 }
 
 fallback_checks() {
-    if [[ -f "/proc/version" ]]; then
-        if grep -qi "android" /proc/version; then
-            os="Android"
-        fi
+    if [[ -f "/proc/version" && $(grep -qi "android" /proc/version) ]]; then
+        os="Android"
+    elif [[ -f "/system/build.prop" || -f "/data/system/packages.xml" || 
+            "$(uname -o)" == "Android" || 
+            (-d "/system" && -d "/vendor") ]]; then
+        os="Android"
+    elif [[ -d "/var/mobile" || 
+            -f "/System/Library/CoreServices/SystemVersion.plist" || 
+            -f "/usr/bin/ideviceinfo" ]]; then
+        os="iOS"
     elif [[ -f "/etc/release" ]]; then
         os=$(head -n 1 /etc/release)
     else
