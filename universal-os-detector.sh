@@ -628,7 +628,16 @@ detect_arch() {
 
 detect_kernel() {
     log "Detecting kernel version..." info
+
     kernel=$(uname -r || echo "Unknown kernel")
+
+    if [[ "$OSTYPE" == "android"* ]]; then
+        kernel_fallback=$(getprop | grep "ro.build.version.release" | awk -F "=" '{print $2}')
+        kernel=${kernel:-$kernel_fallback}
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        kernel_fallback=$(uname -v)
+        kernel=${kernel:-$kernel_fallback}
+    fi
 
     log "Kernel: $kernel" system
 }
@@ -643,7 +652,6 @@ cleanup() {
     log "Exiting..." info
     exit 0
 }
-
 
 #### MAIN
 
