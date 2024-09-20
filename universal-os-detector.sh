@@ -42,6 +42,10 @@ lowercase() {
     echo "$1" | tr '[:upper:]' '[:lower:]'
 }
 
+uppercase() {
+    echo "$1" | tr '[:lower:]' '[:upper:]'
+}
+
 should_log_to_console() {
     local level="$1"
     local lower_level
@@ -64,10 +68,13 @@ log() {
     local color
     color=$(get_log_color "$level")
 
-    echo -e "$current_time [$level]: $message" >> "$log_file"
+    local upper_level
+    upper_level=$(uppercase "$level")
+
+    echo -e "$current_time [$upper_level]: $message" >> "$log_file"
 
     if should_log_to_console "$level"; then
-        print_log_message "$color" "$level" "$message" "$current_time"
+        print_log_message "$color" "$upper_level" "$message" "$current_time"
     fi
 }
 
