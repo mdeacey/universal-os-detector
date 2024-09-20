@@ -260,11 +260,18 @@ detect_os() {
 }
 
 detect_ios_os() {
-    if [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "iPhone"* ]]; then
-        os="iOS"
-    elif [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "iPad"* ]]; then
-        os="iOS (iPad)"
-    fi
+    case "$(uname -m)" in
+        iPhone*|iPad*) 
+            os="iOS" 
+            ;;
+        *)  
+            if [[ -d "/var/mobile" ]] || 
+               [[ -f "/System/Library/CoreServices/SystemVersion.plist" ]] || 
+               [[ -f "/usr/bin/ideviceinfo" ]]; then
+                os="iOS"
+            fi
+            ;;
+    esac
 }
 
 detect_android_os() {
