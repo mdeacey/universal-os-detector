@@ -8,10 +8,11 @@ Universal OS Detector is a Bash script designed to provide detailed information 
 - Identifies system architecture
 - Reports kernel version
 - Detects desktop environment
-- Checks for container environments (Docker, LXC, OpenVZ)
+- Checks for container environments (Docker, Podman, Kubernetes, LXC, OpenVZ)
 - Comprehensive logging with color-coded output and configurable log levels
 - Error handling and cleanup procedures
 - Functional tests to ensure script dependencies are met
+- Supports detection on various Unix-like systems, including Linux, macOS, FreeBSD, Solaris, Android, iOS, and AIX
 
 ## Installation
 
@@ -78,7 +79,7 @@ $ console_log_level=v ./universal-os-detector.sh
 2024-09-19 15:30:10 [info]: All functional tests passed.
 2024-09-19 15:30:10 [info]: Starting detection...
 2024-09-19 15:30:10 [info]: Detecting container environment...
-2024-09-19 15:30:10 [system]: Not running inside a container
+2024-09-19 15:30:10 [system]: Container Environment: None
 2024-09-19 15:30:10 [info]: Detecting operating system...
 2024-09-19 15:30:10 [system]: Operating System: Linux
 2024-09-19 15:30:10 [info]: Detecting version or distribution...
@@ -156,9 +157,9 @@ if [ "$os" = "Linux" ] && [[ "$distro_name" == *"Ubuntu"* ]]; then
 fi
 
 # Check for containerized environment
-if [ "$container_status" = "docker" ]; then
-   echo "Running inside Docker container."
-   # Add Docker-specific commands here
+if [ "$container" = "true" ]; then
+   echo "Running inside a container: $container_name"
+   # Add container-specific commands here
 fi
 
 # Use other detected information
