@@ -523,62 +523,78 @@ detect_aix_version() {
 
 detect_desktop_env() {
     log "Detecting desktop environment..." info
-    local desktop_env="Unknown desktop environment"
 
-    if [ "$os" = "Linux" ]; then
-        if [ -n "$xdg_current_desktop" ]; then
-            desktop_env="$xdg_current_desktop"
-        elif [ -n "$desktop_session" ]; then
-            desktop_env="$desktop_session"
-        elif [ -n "$gdm_session" ]; then
-            desktop_env="$gdm_session"
-        else
-            if command -v kdialog &>/dev/null; then
-                desktop_env="KDE"
-            elif command -v gnome-session &>/dev/null; then
-                desktop_env="GNOME"
-            elif command -v xfce4-session &>/dev/null; then
-                desktop_env="Xfce"
-            elif command -v mate-session &>/dev/null; then
-                desktop_env="MATE"
-            elif command -v cinnamon-session &>/dev/null; then
-                desktop_env="Cinnamon"
-            elif command -v lxsession &>/dev/null; then
-                if command -v lxqt-session &>/dev/null; then
-                    desktop_env="LXQt"
-                else
-                    desktop_env="LXDE"
-                fi
-            elif command -v pantheon-session &>/dev/null; then
-                desktop_env="Pantheon"
-            elif command -v enlightenment_start &>/dev/null; then
-                desktop_env="Enlightenment"
-            elif command -v deepin-session &>/dev/null; then
-                desktop_env="Deepin"
-            else
-                desktop_env="Unknown Linux desktop environment"
-                log "No known desktop Linux environment binaries found." warn
-            fi
-        fi
-    elif [ "$os" = "Windows" ]; then
-        if grep -qi microsoft /proc/version 2>/dev/null; then
-            desktop_env="WSL (Windows Subsystem for Linux)"
-        elif [[ "$ostype" == "msys"* ]]; then
-            desktop_env="Git Bash"
-        elif [[ "$ostype" == "cygwin"* ]]; then
-            desktop_env="Cygwin"
-        elif command -v powershell.exe &>/dev/null; then
-            desktop_env="PowerShell"
-        else
-            desktop_env="Command Prompt (or unknown Windows shell)"
-        fi
-    elif [ "$os" = "MacOS" ]; then
-        desktop_env="MacOS"
+    case "$os" in
+        Linux)
+            detect_linux_desktop_env
+            ;;
+        Windows)
+            detect_windows_desktop_env
+            ;;
+        MacOS|Android|iOS|AIX)
+            log "Desktop Environment: $os" system
+            ;;
+        *)
+            log "Unsupported operating system: $os" error
+            ;;
+    esac
+}
+
+detect_linux_desktop_env() {
+    local desktop_env="Unknown Linux desktop environment"
+
+    if [ -n "$xdg_current_desktop" ]; then
+        desktop_env="$xdg_current_desktop"
+    elif [ -n "$desktop_session" ]; then
+        desktop_env="$desktop_session"
+    elif [ -n "$gdm_session" ]; then
+        desktop_env="$gdm_session"
     else
-        log "Unsupported operating system: $os" error
+        if command -v kdialog &>/dev/null; then
+            desktop_env="KDE"
+        elif command -v gnome-session &>/dev/null; then
+            desktop_env="GNOME"
+        elif command -v xfce4-session &>/dev/null; then
+            desktop_env="Xfce"
+        elif command -v mate-session &>/dev/null; then
+            desktop_env="MATE"
+        elif command -v cinnamon-session &>/dev/null; then
+            desktop_env="Cinnamon"
+        elif command -v lxsession &>/dev/null; then
+            if command -v lxqt-session &>/dev/null; then
+                desktop_env="LXQt"
+            else
+                desktop_env="LXDE"
+            fi
+        elif command -v pantheon-session &>/dev/null; then
+            desktop_env="Pantheon"
+        elif command -v enlightenment_start &>/dev/null; then
+            desktop_env="Enlightenment"
+        elif command -v deepin-session &>/dev/null; then
+            desktop_env="Deepin"
+        else
+            log "No known Linux desktop environment binaries found." warn
+        fi
+    fi
+    log "Linux Desktop Environment: $desktop_env" system
+}
+
+detect_windows_desktop_env() {
+    local desktop_env="Unknown Windows desktop environment"
+
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        desktop_env="WSL (Windows Subsystem for Linux)"
+    elif [[ "$ostype" == "msys"* ]]; then
+        desktop_env="Git Bash"
+    elif [[ "$ostype" == "cygwin"* ]]; then
+        desktop_env="Cygwin"
+    elif command -v powershell.exe &>/dev/null; then
+        desktop_env="PowerShell"
+    else
+        desktop_env="Command Prompt (or unknown Windows shell)"
     fi
 
-    log "Desktop Environment: $desktop_env" system
+    log "Windows Desktop Environment: $desktop_env" system
 }
 
 #### ARCH
