@@ -38,12 +38,19 @@ print_log_message() {
     echo -e "${color}$current_time [$level]: $message${COLOR_RESET}"
 }
 
+lowercase() {
+    echo "$1" | tr '[:upper:]' '[:lower:]'
+}
+
 should_log_to_console() {
     local level="$1"
+    local lower_level
+    lower_level=$(lowercase "$level")
+
     case "$console_log_level" in
         0) return 1 ;;
-        1) [[ "$level" == "system" || "$level" == "warn" || "$level" == "error" ]] && return 0 || return 1 ;;
-        2) [[ "$level" == "system" || "$level" == "warn" || "$level" == "error" || "$level" == "info" ]] && return 0 || return 1 ;;
+        1) [[ "$lower_level" =~ ^(system|warn|error)$ ]] && return 0 || return 1 ;;
+        2) [[ "$lower_level" =~ ^(system|warn|error|info)$ ]] && return 0 || return 1 ;;
         3) return 0 ;;
         *) return 1 ;;
     esac
@@ -65,10 +72,6 @@ log() {
 }
 
 #### LOGGING LEVEL VALIDATION
-
-lowercase() {
-    echo "$1" | tr '[:upper:]' '[:lower:]'
-}
 
 get_log_level() {
     local input="$1"
