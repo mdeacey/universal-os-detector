@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 set -eo pipefail
 trap 'log "Error encountered at line ${LINENO:-unknown} while executing command: ${BASH_COMMAND:-unknown}" "ERROR"' ERR
@@ -236,95 +236,121 @@ detect_version() {
 
     case "$os" in
         MacOS)
-            if command -v sw_vers &>/dev/null; then
-                macos_version=$(sw_vers -productVersion)
-                macos_name=$(sw_vers -productName)
-                case "$macos_version" in
-                    14.*) macos_name="Sonoma" ;;
-                    13.*) macos_name="Ventura" ;;
-                    12.*) macos_name="Monterey" ;;
-                    11.*) macos_name="Big Sur" ;;
-                    10.15*) macos_name="Catalina" ;;
-                    10.14*) macos_name="Mojave" ;;
-                    10.13*) macos_name="High Sierra" ;;
-                    10.12*) macos_name="Sierra" ;;
-                    10.11*) macos_name="El Capitan" ;;
-                    10.10*) macos_name="Yosemite" ;;
-                    *) 
-                        macos_name="Unknown version" 
-                        log "Unknown MacOS version: $macos_version" warn
-                        ;;
-                esac
-                log "Version: $macos_version ($macos_name)" system
-            else
-                log "Command 'sw_vers' not found. Unable to detect MacOS version." error
-            fi
+            detect_macos_version
             ;;
         Linux)
-            if [ -f /etc/os-release ]; then
-                distro_name=$(grep '^NAME=' /etc/os-release | cut -d '"' -f 2)
-                distro_version=$(grep '^VERSION=' /etc/os-release | cut -d '"' -f 2)
-                distro_info="$distro_name $distro_version"
-            elif command -v lsb_release &>/dev/null; then
-                distro_name=$(lsb_release -si)
-                distro_version=$(lsb_release -sr)
-                distro_info="$distro_name $distro_version"
-            else
-                distro_info="Unknown Linux distribution"
-                log "Unknown Linux distribution, /etc/os-release or lsb_release not found." warn
-            fi
-            log "Distribution: $distro_info" system
+            detect_linux_version
             ;;
         Windows)
-            if command -v powershell.exe &>/dev/null; then
-                win_name=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Caption" | tr -d '\r')
-                win_version=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Version" | tr -d '\r')
-                win_build=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).BuildNumber" | tr -d '\r')
-                if [ -z "$win_name" ] || [ -z "$win_version" ]; then
-                    win_info="Unknown Windows version"
-                    log "Unable to fully retrieve Windows version info" warn
-                else
-                    win_info="$win_name (Version: $win_version, Build: $win_build)"
-                fi
-            elif command -v cmd.exe &>/dev/null; then
-                win_info=$(cmd.exe /c ver | tr -d '\r')
-            else
-                win_info="Unknown Windows version"
-                log "No available method to detect Windows version." warn
-            fi
-            log "Windows Version: $win_info" system
+            detect_windows_version
             ;;
         FreeBSD)
-            if [ -f /etc/os-release ]; then
-                bsd_name=$(grep '^NAME=' /etc/os-release | cut -d '"' -f 2)
-                bsd_version=$(grep '^VERSION=' /etc/os-release | cut -d '"' -f 2)
-                bsd_info="$bsd_name $bsd_version"
-            elif command -v uname &>/dev/null; then
-                bsd_name=$(uname -s)
-                bsd_version=$(uname -r)
-                bsd_info="$bsd_name $bsd_version"
-            else
-                bsd_info="Unknown BSD version"
-                log "Unable to detect BSD version, /etc/os-release or uname missing." warn
-            fi
-            log "BSD Version: $bsd_info" system
+            detect_freebsd_version
             ;;
         Solaris)
-            if [ -f /etc/release ]; then
-                sol_version=$(grep '^Oracle Solaris' /etc/release | cut -d ':' -f 2 | xargs)
-                sol_info="Oracle Solaris $sol_version"
-            elif command -v uname &>/dev/null; then
-                sol_info="Solaris $(uname -r)"
-            else
-                sol_info="Unknown Solaris version"
-                log "Unable to detect Solaris version" warn
-            fi
-            log "Solaris Version: $sol_info" system
+            detect_solaris_version
             ;;
         *)
             log "No version name available for $os" info
             ;;
     esac
+}
+
+detect_macos_version() {
+    if command -v sw_vers &>/dev/null; then
+        macos_version=$(sw_vers -productVersion)
+        macos_name=$(sw_vers -productName)
+        case "$macos_version" in
+            14.*) macos_name="Sonoma" ;;
+            13.*) macos_name="Ventura" ;;
+            12.*) macos_name="Monterey" ;;
+            11.*) macos_name="Big Sur" ;;
+            10.15*) macos_name="Catalina" ;;
+            10.14*) macos_name="Mojave" ;;
+            10.13*) macos_name="High Sierra" ;;
+            10.12*) macos_name="Sierra" ;;
+            10.11*) macos_name="El Capitan" ;;
+            10.10*) macos_name="Yosemite" ;;
+            *) 
+                macos_name="Unknown version" 
+                log "Unknown MacOS version: $macos_version" warn
+                ;;
+        esac
+        log "Version: $macos_version ($macos_name)" system
+    else
+        log "Command 'sw_vers' not found. Unable to detect MacOS version." error
+    fi
+}
+
+detect_linux_version() {
+    if [ -f /etc/os-release ]; then
+        distro_name=$(grep '^NAME=' /etc/os-release | cut -d '"' -f 2)
+        distro_version=$(grep '^VERSION=' /etc/os-release | cut -d '"' -f 2)
+        distro_info="$distro_name $distro_version"
+    elif command -v lsb_release &>/dev/null; then
+        distro_name=$(lsb_release -si)
+        distro_version=$(lsb_release -sr)
+        distro_info="$distro_name $distro_version"
+    elif [ -f /etc/redhat-release ]; then
+        distro_info=$(cat /etc/redhat-release)
+    elif [ -f /etc/debian_version ]; then
+        distro_info="Debian $(cat /etc/debian_version)"
+    else
+        distro_info="Unknown Linux distribution"
+        log "Unknown Linux distribution, /etc/os-release or lsb_release not found." warn
+    fi
+    log "Distribution: $distro_info" system
+}
+
+detect_windows_version() {
+    if command -v powershell.exe &>/dev/null; then
+        win_name=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Caption" | tr -d '\r')
+        win_version=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Version" | tr -d '\r')
+        win_build=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).BuildNumber" | tr -d '\r')
+        if [ -z "$win_name" ] || [ -z "$win_version" ]; then
+            win_info="Unknown Windows version"
+            log "Unable to fully retrieve Windows version info" warn
+        else
+            win_info="$win_name (Version: $win_version, Build: $win_build)"
+        fi
+    elif command -v wmic &>/dev/null; then
+        win_info=$(wmic os get Caption, Version /format:table | sed -n 2p)
+    elif command -v cmd.exe &>/dev/null; then
+        win_info=$(cmd.exe /c ver | tr -d '\r')
+    else
+        win_info="Unknown Windows version"
+        log "No available method to detect Windows version." warn
+    fi
+    log "Windows Version: $win_info" system
+}
+
+detect_freebsd_version() {
+    if [ -f /etc/os-release ]; then
+        bsd_name=$(grep '^NAME=' /etc/os-release | cut -d '"' -f 2)
+        bsd_version=$(grep '^VERSION=' /etc/os-release | cut -d '"' -f 2)
+        bsd_info="$bsd_name $bsd_version"
+    elif command -v uname &>/dev/null; then
+        bsd_name=$(uname -s)
+        bsd_version=$(uname -r)
+        bsd_info="$bsd_name $bsd_version"
+    else
+        bsd_info="Unknown BSD version"
+        log "Unable to detect BSD version, /etc/os-release or uname missing." warn
+    fi
+    log "BSD Version: $bsd_info" system
+}
+
+detect_solaris_version() {
+    if [ -f /etc/release ]; then
+        sol_version=$(grep '^Oracle Solaris' /etc/release | cut -d ':' -f 2 | xargs)
+        sol_info="Oracle Solaris $sol_version"
+    elif command -v uname &>/dev/null; then
+        sol_info="Solaris $(uname -r)"
+    else
+        sol_info="Unknown Solaris version"
+        log "Unable to detect Solaris version" warn
+    fi
+    log "Solaris Version: $sol_info" system
 }
 
 detect_desktop_env() {
