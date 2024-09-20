@@ -12,7 +12,7 @@ Universal OS Detector is a Bash script designed to provide detailed information 
 - Comprehensive logging with color-coded output and configurable log levels
 - Error handling and cleanup procedures
 - Functional tests to ensure script dependencies are met
-- Supports detection on various Unix-like systems, including Linux, macOS, FreeBSD, Solaris, Android, iOS, and AIX
+- Supports detection on mobile including Android and iOS
 
 ## Installation
 
