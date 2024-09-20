@@ -196,6 +196,8 @@ functional_tests() {
 
 #### MAIN DETECTION LOGIC
 
+#### CONTAINER
+
 detect_container() {
     log "Detecting container environment..." info
 
@@ -222,23 +224,97 @@ detect_container() {
     fi
 }
 
+#### OS
+
 detect_os() {
     log "Detecting operating system..." info
     os=$(uname || echo "Unknown OS")
     ostype="${ostype:-$(uname)}"
 
     case "$(lowercase "$ostype")" in
-        darwin*) os="MacOS" ;;
-        linux*) os="Linux" ;;
-        freebsd*) os="FreeBSD" ;;
-        cygwin*|msys*|mingw*) os="Windows" ;;
-        solaris*) os="Solaris" ;;
-        aix*) os="AIX" ;;
-        *) os="Unknown" log "Unknown OS detected" warn ;;
+        darwin*)
+            os="MacOS"
+            detect_ios_os
+            ;;
+        linux*)
+            detect_linux_os || detect_android_os
+            ;;
+        freebsd*)
+            os="FreeBSD"
+            ;;
+        cygwin*|msys*|mingw*)
+            detect_windows_os
+            ;;
+        solaris*)
+            os="Solaris"
+            ;;
+        aix*)
+            os="AIX"
+            ;;
+        *)
+            fallback_checks
+            ;;
     esac
 
     log "Operating System: $os" system
 }
+
+detect_ios_os() {
+    if [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "iPhone"* ]]; then
+        os="iOS"
+    elif [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "iPad"* ]]; then
+        os="iOS (iPad)"
+    fi
+}
+
+detect_android_os() {
+    if [[ -f "/system/build.prop" ]]; then
+        os="Android"
+        return 0
+    fi
+    return 1
+}
+
+detect_linux_os() {
+    if [[ -f "/etc/os-release" ]]; then
+        os=$(grep '^NAME=' /etc/os-release | sed -e 's/^NAME=//' -e 's/"//g')
+    elif [[ -x "$(command -v lsb_release)" ]]; then
+        os=$(lsb_release -si)
+    elif [[ -f "/etc/lsb-release" ]]; then
+        os=$(grep '^DISTRIB_ID=' /etc/lsb-release | sed -e 's/^DISTRIB_ID=//')
+    elif [[ -f "/etc/debian_version" ]]; then
+        os="Debian"
+    elif [[ -f "/etc/redhat-release" ]]; then
+        os="Red Hat"
+    else
+        os="Linux (Unknown Distro)"
+    fi
+}
+
+detect_windows_os() {
+    if grep -qi microsoft /proc/version 2>/dev/null; then
+        os="WSL"
+    elif [[ -f "/proc/sys/kernel/osrelease" ]] && grep -qi 'wsl' /proc/sys/kernel/osrelease; then
+        os="WSL"
+    else
+        os="Windows"
+    fi
+}
+
+fallback_checks() {
+    if [[ -f "/proc/version" ]]; then
+        if grep -qi "android" /proc/version; then
+            os="Android"
+        fi
+    elif [[ -f "/etc/release" ]]; then
+        os=$(head -n 1 /etc/release)
+    else
+        os="Unknown"
+        log "Unknown OS detected, using fallback method" warn
+    fi
+}
+
+#### VERSION
 
 detect_version() {
     log "Detecting version or distribution..." info
@@ -362,6 +438,8 @@ detect_solaris_version() {
     log "Solaris Version: $sol_info" system
 }
 
+#### DESKTOP ENV
+
 detect_desktop_env() {
     log "Detecting desktop environment..." info
     local desktop_env="Unknown desktop environment"
@@ -422,6 +500,8 @@ detect_desktop_env() {
     log "Desktop Environment: $desktop_env" system
 }
 
+#### ARCH
+
 detect_arch() {
     log "Detecting architecture..." info
     arch=$(uname -m || echo "Unknown architecture")
@@ -438,6 +518,8 @@ detect_arch() {
 
     log "Architecture: $arch" system
 }
+
+#### KERNEL
 
 detect_kernel() {
     log "Detecting kernel version..." info
