@@ -357,6 +357,7 @@ detect_macos_version() {
         macos_version=$(sw_vers -productVersion)
         macos_name=$(sw_vers -productName)
         case "$macos_version" in
+            15.*) macos_name="Sequoia" ;;
             14.*) macos_name="Sonoma" ;;
             13.*) macos_name="Ventura" ;;
             12.*) macos_name="Monterey" ;;
