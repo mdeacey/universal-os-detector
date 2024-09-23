@@ -170,6 +170,40 @@ echo "Desktop environment: $desktop_env"
 
 This example shows how you can use the variables set by the Universal OS Detector to make decisions in your script based on the detected system information.
 
+## Detected Information
+
+The script detects and provides information about the following categories. Here's a comprehensive list of all possible values for each, in comma-separated format:
+
+1. Container Environment:
+   Docker, Podman, Kubernetes, LXC, OpenVZ, Generic Container, None
+
+2. Operating System:
+   Linux, Windows, MacOS, FreeBSD, Android, iOS, Solaris, AIX, WSL, Cygwin, MinGW, Unknown
+
+3. OS Version/Distribution:
+   - Linux: Ubuntu xx.xx, Debian xx, CentOS xx, Fedora xx, Red Hat Enterprise Linux xx, Arch Linux x, Manjaro xx, openSUSE xx, Alpine Linux xx, Gentoo x, Slackware x, Linux Mint xx.xx, Elementary OS xx, Kali Linux xx, Parrot OS xx, Deepin xx, Endless OS x, Clear Linux xx, Void Linux x, MX Linux xx, Zorin OS xx, Pop!_OS xx [Other distribution names]
+   - MacOS: 15.x (Sequoia), 14.x (Sonoma), 13.x (Ventura), 12.x (Monterey), 11.x (Big Sur), 10.15.x (Catalina), 10.14.x (Mojave), 10.13.x (High Sierra), 10.12.x (Sierra), 10.11.x (El Capitan), 10.10.x (Yosemite), [Older versions]
+   - Windows: Windows 11, Windows 10, Windows 8.1, Windows 8, Windows 7, Windows Server 2022, Windows Server 2019, Windows Server 2016, [Older versions]
+   - FreeBSD: FreeBSD xx.x, OpenBSD x.x, NetBSD x.x, [Other BSD names and versions]
+   - Solaris: Oracle Solaris 11.x, Oracle Solaris 10 Update x, [Older versions]
+   - Android: Android 14 (Upside Down Cake), Android 13 (Tiramisu), Android 12 (Snow Cone), Android 11 (Red Velvet Cake), [Older versions]
+   - iOS: iOS 17.x, iOS 16.x, iOS 15.x, [Older versions]
+   - AIX: AIX 7.3, AIX 7.2, AIX 7.1, [Older versions]
+
+4. Desktop Environment:
+   - Linux: GNOME, KDE, Xfce, MATE, Cinnamon, LXDE, LXQt, Pantheon, Enlightenment, Deepin, Budgie, Unity, i3, Awesome, Openbox, Fluxbox, GNOME Flashback, Unknown
+   - Windows: WSL, Git Bash, Cygwin, PowerShell, Unknown
+   - MacOS: Aqua
+   - Android: Android
+   - iOS: iOS
+   - AIX: AIX
+
+5. Architecture:
+   x86_64 (64-bit), x86 (32-bit), ARM (32-bit), ARM (64-bit), PowerPC 64-bit (little-endian), RISC-V (64-bit), iOS (ARM), Android (ARM), AIX (PowerPC), SPARC, MIPS, Unknown
+
+6. Kernel Version:
+   Linux [version number], Darwin [version number] (for MacOS and iOS), [version number] (for Windows), FreeBSD [version number], SunOS [version number], [version number]-android[version]-[build number] (for Android), [version number] (for AIX)
+
 ## Requirements
 
 - Bash shell

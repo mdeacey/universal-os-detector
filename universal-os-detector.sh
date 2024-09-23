@@ -237,112 +237,112 @@ detect_container() {
 
 detect_os() {
     log "Detecting operating system..." info
-    os=""
-    
-    os_detection_functions=("detect_linux_os" "detect_windows_os" "detect_macos_os" "detect_freebsd_os" 
-                             "detect_android_os" "detect_ios_os" "detect_solaris_os" "detect_aix_os")
-    
-    for detect_fn in "${os_detection_functions[@]}"; do
-        if $detect_fn; then
-            log "Operating System: $os" system
-            return
-        fi
-    done
+    os_name=""
 
-    log "OS detection failed, no known OS detected" warn
-    os="Unknown"
-    log "Operating System: ${os:-Unknown}" system
+    uname_str=$(uname -s)
+    
+    case "$uname_str" in
+        Linux)      detect_linux_os ;;
+        Darwin)     detect_macos_os ;;
+        FreeBSD)    detect_freebsd_os ;;
+        SunOS)      detect_solaris_os ;;
+        AIX)        detect_aix_os ;;
+        *)          log "Quick check did not detect a known OS, running detailed checks..." info ;;
+    esac
+
+    if [[ -n "$os_name" ]]; then
+        log "Operating System: $os_name" system
+        return
+    fi
+
+    if detect_linux_os || detect_windows_os || detect_macos_os || detect_freebsd_os || detect_android_os || detect_ios_os || detect_solaris_os || detect_aix_os ; then
+        log "Operating System: $os_name" system
+    else
+        log "OS detection failed, no known OS detected" warn
+        os_name="Unknown"
+        log "Operating System: $os_name" system
+    fi
 }
 
 detect_linux_os() {
-    if [[ "$(uname -s)" == "Linux" ]] || 
-       grep -qi "linux" /proc/version 2>/dev/null || 
+    if grep -qi "linux" /proc/version 2>/dev/null || 
        [[ "$(cat /proc/sys/kernel/ostype 2>/dev/null)" == "Linux" ]] || 
        [[ -d /sys/module ]]; then
-        os="Linux"
+        os_name="Linux"
         return 0
     fi
     return 1
 }
 
 detect_windows_os() {
-    if [[ "$(uname -s)" == *"NT"* ]] || 
-       [[ -n "$WINDIR" ]] || 
+    if [[ -n "$WINDIR" ]] || 
        grep -qi microsoft /proc/version 2>/dev/null; then
-        os="Windows"
+        os_name="Windows"
         return 0
-    elif [[ "$(uname -r)" == *"WSL"* ]] || 
-         [[ -f "/proc/version" && $(grep -qi 'wsl' /proc/version) ]]; then
-        os="WSL"
+    elif [[ -f "/proc/version" && $(grep -qi 'wsl' /proc/version) ]]; then
+        os_name="WSL"
         return 0
-    elif [[ "$(uname -s)" == *"CYGWIN"* ]] || 
-         [[ -f "/proc/version" && $(grep -qi 'cygwin' /proc/version) ]]; then
-        os="Cygwin"
+    elif [[ -f "/proc/version" && $(grep -qi 'cygwin' /proc/version) ]]; then
+        os_name="Cygwin"
         return 0
-    elif [[ "$(uname -s)" == *"MINGW"* ]] || 
-         [[ -f "/proc/version" && $(grep -qi 'mingw' /proc/version) ]]; then
-        os="MinGW"
+    elif [[ -f "/proc/version" && $(grep -qi 'mingw' /proc/version) ]]; then
+        os_name="MinGW"
         return 0
     fi
     return 1
 }
 
 detect_macos_os() {
-    if [[ "$(uname)" == "Darwin" ]] || 
-       [[ -d /System/Library/CoreServices ]] || 
+    if [[ -d /System/Library/CoreServices ]] || 
        [[ -f /System/Library/CoreServices/SystemVersion.plist ]]; then
-        os="MacOS"
+        os_name="MacOS"
         return 0
     fi
     return 1
 }
 
 detect_freebsd_os() {
-    if [[ "$(uname -s)" == "FreeBSD" ]] || 
-       [[ -f /bin/freebsd-version ]] || 
+    if [[ -f /bin/freebsd-version ]] || 
        [[ -d /boot/kernel ]]; then
-        os="FreeBSD"
+        os_name="FreeBSD"
         return 0
     fi
     return 1
 }
 
 detect_android_os() {
-    if [[ "$(uname -o 2>/dev/null)" == "Android" ]] || 
-       [[ -f "/system/build.prop" || -f "/data/system/packages.xml" ]] || 
+    if [[ -f "/system/build.prop" || -f "/data/system/packages.xml" ]] || 
        [[ -d "/system" && -d "/data" ]] || 
        [[ "$(getprop ro.build.version.release 2>/dev/null)" ]]; then
-        os="Android"
+        os_name="Android"
         return 0
     fi
     return 1
 }
 
 detect_ios_os() {
-    if [[ "$(uname -s)" == "Darwin" && -d "/var/mobile" ]] || 
+    if [[ -d "/var/mobile" ]] || 
        [[ -f "/System/Library/CoreServices/SystemVersion.plist" ]] || 
        [[ -f "/usr/bin/ideviceinfo" ]]; then
-        os="iOS"
+        os_name="iOS"
         return 0
     fi
     return 1
 }
 
 detect_solaris_os() {
-    if [[ "$(uname -s)" == "SunOS" ]] || 
-       [[ -d "/usr/sbin" && -d "/usr/bin" ]] || 
+    if [[ -d "/usr/sbin" && -d "/usr/bin" ]] || 
        [[ -f "/etc/release" ]]; then
-        os="Solaris"
+        os_name="Solaris"
         return 0
     fi
     return 1
 }
 
 detect_aix_os() {
-    if [[ "$(uname -s)" == "AIX" ]] || 
-       [[ -f "/etc/os-release" && $(grep -qi "aix" /etc/os-release) ]] || 
+    if [[ -f "/etc/os-release" && $(grep -qi "aix" /etc/os-release) ]] || 
        [[ -f "/etc/vmlinux" ]]; then
-        os="AIX"
+        os_name="AIX"
         return 0
     fi
     return 1
@@ -353,7 +353,7 @@ detect_aix_os() {
 detect_version() {
     log "Detecting version or distribution..." info
 
-    case "$os" in
+    case "$os_name" in
         MacOS)
             detect_macos_version
             ;;
@@ -530,7 +530,7 @@ detect_aix_version() {
 detect_desktop_env() {
     log "Detecting desktop environment..." info
 
-    case "$os" in
+    case "$os_name" in
         Linux)
             detect_linux_desktop_env
             ;;
@@ -538,10 +538,10 @@ detect_desktop_env() {
             detect_windows_desktop_env
             ;;
         MacOS|Android|iOS|AIX)
-            log "Desktop Environment: $os" system
+            log "Desktop Environment: $os_name" system
             ;;
         *)
-            log "Unsupported operating system: $os" error
+            log "Unsupported operating system: $os_name" error
             ;;
     esac
 }
