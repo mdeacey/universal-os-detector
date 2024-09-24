@@ -551,95 +551,95 @@ detect_version_name() {
 }
 
 map_macos_ver_name() {
-        case "$macos_version_number" in
-            15.*) macos_version_name="Sequoia" ;;
-            14.*) macos_version_name="Sonoma" ;;
-            13.*) macos_version_name="Ventura" ;;
-            12.*) macos_version_name="Monterey" ;;
-            11.*) macos_version_name="Big Sur" ;;
-            10.15*) macos_version_name="Catalina" ;;
-            10.14*) macos_version_name="Mojave" ;;
-            10.13*) macos_version_name="High Sierra" ;;
-            10.12*) macos_version_name="Sierra" ;;
-            10.11*) macos_version_name="El Capitan" ;;
-            10.10*) macos_version_name="Yosemite" ;;
-            *)
-                macos_version_name="Unknown"
-                log "Unable to map MacOS version number." warn
-                ;;
-        esac
-        log "MacOS Version Name: $macos_version_name" system
+    case "$version_number" in
+        15.*) version_name="Sequoia" ;;
+        14.*) version_name="Sonoma" ;;
+        13.*) version_name="Ventura" ;;
+        12.*) version_name="Monterey" ;;
+        11.*) version_name="Big Sur" ;;
+        10.15*) version_name="Catalina" ;;
+        10.14*) version_name="Mojave" ;;
+        10.13*) version_name="High Sierra" ;;
+        10.12*) version_name="Sierra" ;;
+        10.11*) version_name="El Capitan" ;;
+        10.10*) version_name="Yosemite" ;;
+        *) 
+            version_name="Unknown"
+            log "Unable to map version number to version name." warn
+            ;;
+    esac
+    log "Version Name: $version_name" system
 }
 
 map_win_ver_name() {
-    case "$win_version_number" in
-        11.0.*) win_version_name="Windows 11" ;;
-        10.0.*) win_version_name="Windows 10" ;;
-        6.3.*) win_version_name="Windows 8.1" ;;
-        6.2.*) win_version_name="Windows 8" ;;
-        6.1.*) win_version_name="Windows 7" ;;
-        6.0.*) win_version_name="Windows Vista" ;;
-        5.1.*) win_version_name="Windows XP" ;;
-        5.0.*) win_version_name="Windows 2000" ;;
-        4.0.*) win_version_name="Windows NT 4.0" ;;
-        3.51.*) win_version_name="Windows NT 3.51" ;;
-        3.5.*) win_version_name="Windows NT 3.5" ;;
-        3.1.*) win_version_name="Windows 3.1" ;;
-        2.0.*) win_version_name="Windows 2.0" ;;
-        1.0.*) win_version_name="Windows 1.0" ;;
+    case "$version_number" in
+        11.0.*) version_name="Windows 11" ;;
+        10.0.*) version_name="Windows 10" ;;
+        6.3.*) version_name="Windows 8.1" ;;
+        6.2.*) version_name="Windows 8" ;;
+        6.1.*) version_name="Windows 7" ;;
+        6.0.*) version_name="Windows Vista" ;;
+        5.1.*) version_name="Windows XP" ;;
+        5.0.*) version_name="Windows 2000" ;;
+        4.0.*) version_name="Windows NT 4.0" ;;
+        3.51.*) version_name="Windows NT 3.51" ;;
+        3.5.*) version_name="Windows NT 3.5" ;;
+        3.1.*) version_name="Windows 3.1" ;;
+        2.0.*) version_name="Windows 2.0" ;;
+        1.0.*) version_name="Windows 1.0" ;;
         *) 
-            win_version_name="Unknown"
-            log "Unable to map Windows version number." warn
+            version_name="Unknown"
+            log "Unable to map version number to version name." warn
             ;;
     esac
-    log "Windows Version Name: $win_version_name" system
+    log "Version Name: $version_name" system
 }
 
 map_solaris_ver_name() {
-    case "$solaris_version_number" in
-        11.*) solaris_version_name="Oracle Solaris 11" ;;
-        10.*) solaris_version_name="Oracle Solaris 10" ;;
-        5.11) solaris_version_name="SunOS 5.11" ;;
-        5.10) solaris_version_name="SunOS 5.10" ;;
-        5.9)  solaris_version_name="SunOS 5.9" ;;
-        5.8)  solaris_version_name="SunOS 5.8" ;;
-        *)
-            solaris_version_name="Unknown"
-            log "Unable to map Solaris version number." warn
+    case "$version_number" in
+        11.*) version_name="Oracle Solaris 11" ;;
+        10.*) version_name="Oracle Solaris 10" ;;
+        5.11) version_name="SunOS 5.11" ;;
+        5.10) version_name="SunOS 5.10" ;;
+        5.9)  version_name="SunOS 5.9" ;;
+        5.8)  version_name="SunOS 5.8" ;;
+        *) 
+            version_name="Unknown"
+            log "Unable to map version number to version name." warn
             ;;
     esac
-    log "Solaris Version Name: $solaris_version_name" system
+    log "Version Name: $version_name" system
 }
 
 map_android_ver_name() {
-    case "$android_version_number" in
-        14.*) android_version_name="Upside Down Cake" ;;
-        13.*) android_version_name="Tiramisu" ;;
-        12.*) android_version_name="Snow Cone" ;;
-        11.*) android_version_name="Red Velvet Cake" ;;
-        10.*) android_version_name="Quince Tart" ;;
-        9.*)  android_version_name="Pie" ;;
-        8.*)  android_version_name="Oreo" ;;
-        7.*)  android_version_name="Nougat" ;;
-        6.*)  android_version_name="Marshmallow" ;;
-        5.*)  android_version_name="Lollipop" ;;
-        4.4*) android_version_name="KitKat" ;;
-        4.3*) android_version_name="Jelly Bean" ;;
-        4.2*) android_version_name="Jelly Bean" ;;
-        4.1*) android_version_name="Jelly Bean" ;;
-        4.0*) android_version_name="Ice Cream Sandwich" ;;
-        3.*)  android_version_name="Honeycomb" ;;
-        2.3*) android_version_name="Gingerbread" ;;
-        2.2*) android_version_name="FroYo" ;;
-        2.1*) android_version_name="Eclair" ;;
-        1.6)  android_version_name="Donut" ;;
-        1.5)  android_version_name="Cupcake" ;;
-        *)
-            android_version_name="Unknown"
-            log "Unable to map Android version number." warn
+    case "$version_number" in
+        14.*) version_name="Upside Down Cake" ;;
+        13.*) version_name="Tiramisu" ;;
+        12.*) version_name="Snow Cone" ;;
+        11.*) version_name="Red Velvet Cake" ;;
+        10.*) version_name="Quince Tart" ;;
+        9.*)  version_name="Pie" ;;
+        8.*)  version_name="Oreo" ;;
+        7.*)  version_name="Nougat" ;;
+        6.*)  version_name="Marshmallow" ;;
+        5.*)  version_name="Lollipop" ;;
+        4.4*) version_name="KitKat" ;;
+        4.3*) version_name="Jelly Bean" ;;
+        4.2*) version_name="Jelly Bean" ;;
+        4.1*) version_name="Jelly Bean" ;;
+        4.0*) version_name="Ice Cream Sandwich" ;;
+        3.*)  version_name="Honeycomb" ;;
+        2.3*) version_name="Gingerbread" ;;
+        2.2*) version_name="FroYo" ;;
+        2.1*) version_name="Eclair" ;;
+        1.6)  version_name="Donut" ;;
+        1.5)  version_name="Cupcake" ;;
+        *) 
+            version_name="Unknown"
+            log "Unable to map version number to version name." warn
             ;;
     esac
-    log "Android Version Name: $android_version_name" system
+    log "Version Name: $version_name" system
 }
 
 
