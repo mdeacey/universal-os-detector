@@ -399,7 +399,7 @@ detect_version_number() {
 
     case "$os_name" in
         MacOS)          detect_macos_ver_no ;;
-        Linux)          detect_linux_ver_no ;;
+        # Linux)        Base on detect_linux_dist TBA ;;
         Windows)        detect_windows_ver_no ;;
         WSL)            detect_wsl_ver_no ;;
         Cygwin)         detect_cygwin_ver_no ;;
@@ -417,140 +417,112 @@ detect_version_number() {
 }
 
 detect_macos_ver_no() {
-    macos_version_number=$(sw_vers -productVersion 2>/dev/null)
-    [ -n "$macos_version_number" ] && log "MacOS Version Number: $macos_version_number" system || 
-    log "Unable to detect MacOS version number." warn
+    version_number=$(sw_vers -productVersion 2>/dev/null)
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_linux_ver_no() {
     if [ -f /etc/os-release ]; then
-        linux_distro_version_number=$(grep -oP '^VERSION="\K[^"]+' /etc/os-release)
+        version_number=$(grep -oP '^VERSION="\K[^"]+' /etc/os-release)
     elif command -v lsb_release &>/dev/null; then
-        linux_distro_version_number=$(lsb_release -sr)
+        version_number=$(lsb_release -sr)
     elif [ -f /etc/redhat-release ]; then
-        linux_distro_version_number=$(< /etc/redhat-release)
+        version_number=$(< /etc/redhat-release)
     elif [ -f /etc/debian_version ]; then
-        linux_distro_version_number="Debian $(< /etc/debian_version)"
+        version_number="Debian $(< /etc/debian_version)"
     fi
-    [ -n "$linux_distro_version_number" ] && log "Linux Distribution Version Number: $linux_distro_version_number" system || 
-    log "Unable to detect Linux distribution version number." warn
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_windows_ver_no() {
-    win_version_number=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Version" 2>/dev/null || 
+    version_number=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Version" 2>/dev/null || 
     wmic os get Version | sed -n 2p || 
     cmd.exe /c ver)
-    win_version_number=$(echo "$win_version_number" | tr -d '\r')
-    [ -n "$win_version_number" ] && log "Windows Version Number: $win_version_number" system || 
-    log "Unable to detect Windows version number." warn
+    version_number=$(echo "$version_number" | tr -d '\r')
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_freebsd_ver_no() {
-    freebsd_version_number=$(grep -oP '^VERSION="\K[^"]+' /etc/os-release 2>/dev/null || 
+    version_number=$(grep -oP '^VERSION="\K[^"]+' /etc/os-release 2>/dev/null || 
     sysctl -n kern.version 2>/dev/null || 
     uname -r)
-
-    if [ -n "$freebsd_version_number" ]; then
-        log "FreeBSD Version Number: $freebsd_version_number" system
-    else
-        log "Unable to detect FreeBSD version number." warn
-    fi
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_openbsd_ver_no() {
-    openbsd_version_number=$(uname -r) || 
+    version_number=$(uname -r || 
     dmesg | grep -oP 'OpenBSD \K[0-9]+\.[0-9]+' | head -n 1 || 
-    sysctl -n kern.version 2>/dev/null
-
-    if [ -n "$openbsd_version_number" ]; then
-        log "OpenBSD Version Number: $openbsd_version_number" system
-    else
-        log "Unable to detect OpenBSD version number." warn
-    fi
+    sysctl -n kern.version 2>/dev/null)
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_netbsd_ver_no() {
-    netbsd_version_number=$(uname -r) || 
+    version_number=$(uname -r || 
     sysctl -n kern.version 2>/dev/null || 
-    dmesg | grep -oP 'NetBSD \K[0-9]+\.[0-9]+' | head -n 1
-
-    if [ -n "$netbsd_version_number" ]; then
-        log "NetBSD Version Number: $netbsd_version_number" system
-    else
-        log "Unable to detect NetBSD version number." warn
-    fi
+    dmesg | grep -oP 'NetBSD \K[0-9]+\.[0-9]+' | head -n 1)
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_dragonflybsd_ver_no() {
-    dragonflybsd_version_number=$(uname -r) || 
+    version_number=$(uname -r || 
     dmesg | grep -oP 'DragonFly v\K[0-9]+\.[0-9]+' | head -n 1 || 
-    sysctl -n kern.version 2>/dev/null
-
-    if [ -n "$dragonflybsd_version_number" ]; then
-        log "DragonFlyBSD Version Number: $dragonflybsd_version_number" system
-    else
-        log "Unable to detect DragonFlyBSD version number." warn
-    fi
+    sysctl -n kern.version 2>/dev/null)
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_wsl_ver_no() {
-    wsl_version_number=$(wsl.exe --version 2>/dev/null | grep -oP 'WSL \K[0-9]+(\.[0-9]+)?' || 
+    version_number=$(wsl.exe --version 2>/dev/null | grep -oP 'WSL \K[0-9]+(\.[0-9]+)?' || 
     uname -r | grep -oP 'Microsoft \K[0-9]+\.[0-9]+' || 
     powershell.exe -Command "[System.Environment]::OSVersion.Version" 2>/dev/null)
-
-    if [ -n "$wsl_version_number" ]; then
-        log "WSL Version Number: $wsl_version_number" system
-    else
-        log "Unable to detect WSL version number." warn
-    fi
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_cygwin_ver_no() {
-    cygwin_version_number=$(cygcheck -V 2>/dev/null | grep -oP 'Cygwin \K[0-9]+\.[0-9]+' || 
+    version_number=$(cygcheck -V 2>/dev/null | grep -oP 'Cygwin \K[0-9]+\.[0-9]+' || 
                      uname -r | grep -oP 'cygwin \K[0-9]+\.[0-9]+' || 
                      setup-x86.exe --version 2>/dev/null)
-
-    if [ -n "$cygwin_version_number" ]; then
-        log "Cygwin Version Number: $cygwin_version_number" system
-    else
-        log "Unable to detect Cygwin version number." warn
-    fi
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_mingw_ver_no() {
-    mingw_version_number=$(gcc --version 2>/dev/null | grep -oP 'gcc \(MinGW\) \K[0-9]+\.[0-9]+' || 
+    version_number=$(gcc --version 2>/dev/null | grep -oP 'gcc \(MinGW\) \K[0-9]+\.[0-9]+' || 
                     mingw-get --version 2>/dev/null | grep -oP 'MinGW \K[0-9]+\.[0-9]+' || 
                     uname -r | grep -oP 'mingw-w64 \K[0-9]+\.[0-9]+')
-
-    if [ -n "$mingw_version_number" ]; then
-        log "MinGW Version Number: $mingw_version_number" system
-    else
-        log "Unable to detect MinGW version number." warn
-    fi
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_solaris_ver_no() {
-    sol_version_number=$(grep -oP '^Oracle Solaris.*:\K.*' /etc/release 2>/dev/null || uname -r)
-    [ -n "$sol_version_number" ] && log "Solaris Version Number: $sol_version_number" system || 
-    log "Unable to detect Solaris version number." warn
+    version_number=$(grep -oP '^Oracle Solaris.*:\K.*' /etc/release 2>/dev/null || uname -r)
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_android_ver_no() {
-    android_version_number=$(getprop ro.build.version.release 2>/dev/null)
-    [ -n "$android_version_number" ] && log "Android Version Number: $android_version_number" system || 
-    log "Unable to detect Android version number." warn
+    version_number=$(getprop ro.build.version.release 2>/dev/null)
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_ios_ver_no() {
-    ios_version_number=$(ideviceinfo -k ProductVersion 2>/dev/null)
-    [ -n "$ios_version_number" ] && log "iOS Version Number: $ios_version_number" system || 
-    log "Unable to detect iOS version number." warn
+    version_number=$(ideviceinfo -k ProductVersion 2>/dev/null)
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 detect_aix_ver_no() {
-    aix_version_number=$(oslevel 2>/dev/null)
-    [ -n "$aix_version_number" ] && log "AIX Version Number: $aix_version_number" system || 
-    log "Unable to detect AIX version number." warn
+    version_number=$(oslevel 2>/dev/null)
+    [ -n "$version_number" ] && log "Version Number: $version_number" system || 
+    log "Unable to detect version number." warn
 }
 
 
