@@ -242,12 +242,15 @@ detect_os() {
     uname_str=$(uname -s)
     
     case "$uname_str" in
-        Linux)      detect_linux_os ;;
-        Darwin)     detect_macos_os ;;
-        FreeBSD)    detect_freebsd_os ;;
-        SunOS)      detect_solaris_os ;;
-        AIX)        detect_aix_os ;;
-        *)          log "Quick check did not detect a known OS, running detailed checks..." info ;;
+        Linux)          os_name="Linux" ;;
+        Darwin)         os_name="MacOS" ;;
+        FreeBSD)        os_name="FreeBSD" ;;
+        OpenBSD)        os_name="OpenBSD" ;;
+        NetBSD)         os_name="NetBSD" ;;
+        DragonFlyBSD)   os_name="DragonFlyBSD" ;;
+        SunOS)          os_name="Solaris" ;;
+        AIX)            os_name="AIX" ;;
+        *)              log "Quick check did not detect a known OS, running detailed checks..." info ;;
     esac
 
     if [[ -n "$os_name" ]]; then
@@ -255,10 +258,13 @@ detect_os() {
         return
     fi
 
-    if detect_linux_os || detect_windows_os || detect_macos_os || detect_freebsd_os || detect_android_os || detect_ios_os || detect_solaris_os || detect_aix_os ; then
+    if detect_linux_os || detect_windows_os || detect_macos_os || 
+       detect_freebsd_os || detect_android_os || detect_ios_os || 
+       detect_solaris_os || detect_aix_os || detect_freebsd_os || 
+       detect_openbsd_os || detect_netbsd_os || detect_dragonflybsd_os; then
         log "Operating System: $os_name" system
     else
-        log "OS detection failed, no known OS detected" warn
+        log "Unable to detect OS." warn
         os_name="Unknown"
         log "Operating System: $os_name" system
     fi
@@ -296,15 +302,6 @@ detect_macos_os() {
     if [[ -d /System/Library/CoreServices ]] || 
        [[ -f /System/Library/CoreServices/SystemVersion.plist ]]; then
         os_name="MacOS"
-        return 0
-    fi
-    return 1
-}
-
-detect_freebsd_os() {
-    if [[ -f /bin/freebsd-version ]] || 
-       [[ -d /boot/kernel ]]; then
-        os_name="FreeBSD"
         return 0
     fi
     return 1
@@ -348,182 +345,331 @@ detect_aix_os() {
     return 1
 }
 
-#### VERSION
+detect_freebsd_os() {
+    if [[ -f /bin/freebsd-version ]] || [[ -d /boot/kernel ]]; then
+        os_name="FreeBSD"
+        return 0
+    fi
+    return 1
+}
 
-detect_version() {
-    log "Detecting version or distribution..." info
+detect_openbsd_os() {
+    if [[ -f /etc/version ]]; then
+        os_name="OpenBSD"
+        return 0
+    fi
+    return 1
+}
+
+detect_netbsd_os() {
+    if [[ -f /etc/netbsd-version ]]; then
+        os_name="NetBSD"
+        return 0
+    fi
+    return 1
+}
+
+detect_dragonflybsd_os() {
+    if [[ -f /bin/dfbsd-version ]]; then
+        os_name="DragonFlyBSD"
+        return 0
+    fi
+    return 1
+}
+
+### DIST
+
+detect_linux_dist() {
+    log "Detecting Linux distribution..." info
+    if [ -f /etc/os-release ]; then
+        linux_distro_name=$(grep '^NAME=' /etc/os-release | cut -d '"' -f 2)
+    elif command -v lsb_release &>/dev/null; then
+        linux_distro_name=$(lsb_release -si)
+    else
+        linux_distro_name="Unknown"
+        log "Unable to detect Linux Distribution name." warn
+    fi
+    log "Linux Distribution Name: $linux_distro_name" system
+}
+
+### VERSION NUMBER
+
+detect_version_number() {
+    log "Detecting version number..." info
 
     case "$os_name" in
-        MacOS)
-            detect_macos_version
-            ;;
-        Linux)
-            detect_linux_version
-            ;;
-        Windows)
-            detect_windows_version
-            ;;
-        FreeBSD)
-            detect_freebsd_version
-            ;;
-        Solaris)
-            detect_solaris_version
-            ;;
-        Android)
-            detect_android_version
-            ;;
-        iOS)
-            detect_ios_version
-            ;;
-        AIX)
-            detect_aix_version
-            ;;
-        *)
-            log "No version name available for $os" info
-            ;;
+        MacOS)          detect_macos_ver_no ;;
+        Linux)          detect_linux_ver_no ;;
+        Windows)        detect_windows_ver_no ;;
+        WSL)            detect_wsl_ver_no ;;
+        Cygwin)         detect_cygwin_ver_no ;;
+        MinGW)          detect_mingw_ver_no ;;
+        FreeBSD)        detect_freebsd_ver_no ;;
+        OpenBSD)        detect_openbsd_ver_no ;;
+        NetBSD)         detect_netbsd_ver_no ;;
+        DragonflyBSD)   detect_dragonflybsd_ver_no ;;
+        Solaris)        detect_solaris_ver_no ;;
+        Android)        detect_android_ver_no ;;
+        iOS)            detect_ios_ver_no ;;
+        AIX)            detect_aix_ver_no ;;
+        *)              log "Unable to detect version number for $os_name" info ;;
     esac
 }
 
-detect_macos_version() {
-    if command -v sw_vers &>/dev/null; then
-        macos_version=$(sw_vers -productVersion)
-        macos_name=$(sw_vers -productName)
-        case "$macos_version" in
-            15.*) macos_name="Sequoia" ;;
-            14.*) macos_name="Sonoma" ;;
-            13.*) macos_name="Ventura" ;;
-            12.*) macos_name="Monterey" ;;
-            11.*) macos_name="Big Sur" ;;
-            10.15*) macos_name="Catalina" ;;
-            10.14*) macos_name="Mojave" ;;
-            10.13*) macos_name="High Sierra" ;;
-            10.12*) macos_name="Sierra" ;;
-            10.11*) macos_name="El Capitan" ;;
-            10.10*) macos_name="Yosemite" ;;
-            *) 
-                macos_name="Unknown version" 
-                log "Unknown MacOS version: $macos_version" warn
+detect_macos_ver_no() {
+    macos_version_number=$(sw_vers -productVersion 2>/dev/null)
+    [ -n "$macos_version_number" ] && log "MacOS Version Number: $macos_version_number" system || 
+    log "Unable to detect MacOS version number." warn
+}
+
+detect_linux_ver_no() {
+    if [ -f /etc/os-release ]; then
+        linux_distro_version_number=$(grep -oP '^VERSION="\K[^"]+' /etc/os-release)
+    elif command -v lsb_release &>/dev/null; then
+        linux_distro_version_number=$(lsb_release -sr)
+    elif [ -f /etc/redhat-release ]; then
+        linux_distro_version_number=$(< /etc/redhat-release)
+    elif [ -f /etc/debian_version ]; then
+        linux_distro_version_number="Debian $(< /etc/debian_version)"
+    fi
+    [ -n "$linux_distro_version_number" ] && log "Linux Distribution Version Number: $linux_distro_version_number" system || 
+    log "Unable to detect Linux distribution version number." warn
+}
+
+detect_windows_ver_no() {
+    win_version_number=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Version" 2>/dev/null || 
+    wmic os get Version | sed -n 2p || 
+    cmd.exe /c ver)
+    win_version_number=$(echo "$win_version_number" | tr -d '\r')
+    [ -n "$win_version_number" ] && log "Windows Version Number: $win_version_number" system || 
+    log "Unable to detect Windows version number." warn
+}
+
+detect_freebsd_ver_no() {
+    freebsd_version_number=$(grep -oP '^VERSION="\K[^"]+' /etc/os-release 2>/dev/null || 
+    sysctl -n kern.version 2>/dev/null || 
+    uname -r)
+
+    if [ -n "$freebsd_version_number" ]; then
+        log "FreeBSD Version Number: $freebsd_version_number" system
+    else
+        log "Unable to detect FreeBSD version number." warn
+    fi
+}
+
+detect_openbsd_ver_no() {
+    openbsd_version_number=$(uname -r) || 
+    dmesg | grep -oP 'OpenBSD \K[0-9]+\.[0-9]+' | head -n 1 || 
+    sysctl -n kern.version 2>/dev/null
+
+    if [ -n "$openbsd_version_number" ]; then
+        log "OpenBSD Version Number: $openbsd_version_number" system
+    else
+        log "Unable to detect OpenBSD version number." warn
+    fi
+}
+
+detect_netbsd_ver_no() {
+    netbsd_version_number=$(uname -r) || 
+    sysctl -n kern.version 2>/dev/null || 
+    dmesg | grep -oP 'NetBSD \K[0-9]+\.[0-9]+' | head -n 1
+
+    if [ -n "$netbsd_version_number" ]; then
+        log "NetBSD Version Number: $netbsd_version_number" system
+    else
+        log "Unable to detect NetBSD version number." warn
+    fi
+}
+
+detect_dragonflybsd_ver_no() {
+    dragonflybsd_version_number=$(uname -r) || 
+    dmesg | grep -oP 'DragonFly v\K[0-9]+\.[0-9]+' | head -n 1 || 
+    sysctl -n kern.version 2>/dev/null
+
+    if [ -n "$dragonflybsd_version_number" ]; then
+        log "DragonFlyBSD Version Number: $dragonflybsd_version_number" system
+    else
+        log "Unable to detect DragonFlyBSD version number." warn
+    fi
+}
+
+detect_wsl_ver_no() {
+    wsl_version_number=$(wsl.exe --version 2>/dev/null | grep -oP 'WSL \K[0-9]+(\.[0-9]+)?' || 
+    uname -r | grep -oP 'Microsoft \K[0-9]+\.[0-9]+' || 
+    powershell.exe -Command "[System.Environment]::OSVersion.Version" 2>/dev/null)
+
+    if [ -n "$wsl_version_number" ]; then
+        log "WSL Version Number: $wsl_version_number" system
+    else
+        log "Unable to detect WSL version number." warn
+    fi
+}
+
+detect_cygwin_ver_no() {
+    cygwin_version_number=$(cygcheck -V 2>/dev/null | grep -oP 'Cygwin \K[0-9]+\.[0-9]+' || 
+                     uname -r | grep -oP 'cygwin \K[0-9]+\.[0-9]+' || 
+                     setup-x86.exe --version 2>/dev/null)
+
+    if [ -n "$cygwin_version_number" ]; then
+        log "Cygwin Version Number: $cygwin_version_number" system
+    else
+        log "Unable to detect Cygwin version number." warn
+    fi
+}
+
+detect_mingw_ver_no() {
+    mingw_version_number=$(gcc --version 2>/dev/null | grep -oP 'gcc \(MinGW\) \K[0-9]+\.[0-9]+' || 
+                    mingw-get --version 2>/dev/null | grep -oP 'MinGW \K[0-9]+\.[0-9]+' || 
+                    uname -r | grep -oP 'mingw-w64 \K[0-9]+\.[0-9]+')
+
+    if [ -n "$mingw_version_number" ]; then
+        log "MinGW Version Number: $mingw_version_number" system
+    else
+        log "Unable to detect MinGW version number." warn
+    fi
+}
+
+detect_solaris_ver_no() {
+    sol_version_number=$(grep -oP '^Oracle Solaris.*:\K.*' /etc/release 2>/dev/null || uname -r)
+    [ -n "$sol_version_number" ] && log "Solaris Version Number: $sol_version_number" system || 
+    log "Unable to detect Solaris version number." warn
+}
+
+detect_android_ver_no() {
+    android_version_number=$(getprop ro.build.version.release 2>/dev/null)
+    [ -n "$android_version_number" ] && log "Android Version Number: $android_version_number" system || 
+    log "Unable to detect Android version number." warn
+}
+
+detect_ios_ver_no() {
+    ios_version_number=$(ideviceinfo -k ProductVersion 2>/dev/null)
+    [ -n "$ios_version_number" ] && log "iOS Version Number: $ios_version_number" system || 
+    log "Unable to detect iOS version number." warn
+}
+
+detect_aix_ver_no() {
+    aix_version_number=$(oslevel 2>/dev/null)
+    [ -n "$aix_version_number" ] && log "AIX Version Number: $aix_version_number" system || 
+    log "Unable to detect AIX version number." warn
+}
+
+
+### VERSION NAME
+
+detect_version_name() {
+    log "Detecting version name..." info
+
+    case "$os_name" in
+        MacOS)          map_macos_ver_name ;;
+        # Linux)        Need to detect Distribution first, fix TBA ;;
+        Windows)        map_win_ver_name ;;
+        # WSL)          TBA ;;
+        # Cygwin)       TBA ;;
+        # MinGW)        TBA ;;
+        # FreeBSD)      TBA ;;
+        # OpenBSD)      TBA ;;
+        # NetBSD)       TBA ;;
+        # DragonflyBSD) TBA ;;
+        Solaris)        map_solaris_ver_name ;;
+        Android)        map_android_ver_name ;;
+        # iOS)          Numbers only fix TBA ;;
+        # AIX)          Numbers only fix TBA ;;
+        *)              log "No version name available for $os_name" info ;;
+    esac
+}
+
+map_macos_ver_name() {
+        case "$macos_version_number" in
+            15.*) macos_version_name="Sequoia" ;;
+            14.*) macos_version_name="Sonoma" ;;
+            13.*) macos_version_name="Ventura" ;;
+            12.*) macos_version_name="Monterey" ;;
+            11.*) macos_version_name="Big Sur" ;;
+            10.15*) macos_version_name="Catalina" ;;
+            10.14*) macos_version_name="Mojave" ;;
+            10.13*) macos_version_name="High Sierra" ;;
+            10.12*) macos_version_name="Sierra" ;;
+            10.11*) macos_version_name="El Capitan" ;;
+            10.10*) macos_version_name="Yosemite" ;;
+            *)
+                macos_version_name="Unknown"
+                log "Unable to map MacOS version number." warn
                 ;;
         esac
-        log "Version: $macos_version ($macos_name)" system
-    else
-        log "Command 'sw_vers' not found. Unable to detect MacOS version." error
-    fi
+        log "MacOS Version Name: $macos_version_name" system
 }
 
-detect_linux_version() {
-    if [ -f /etc/os-release ]; then
-        distro_name=$(grep '^NAME=' /etc/os-release | cut -d '"' -f 2)
-        distro_version=$(grep '^VERSION=' /etc/os-release | cut -d '"' -f 2)
-        distro_info="$distro_name $distro_version"
-    elif command -v lsb_release &>/dev/null; then
-        distro_name=$(lsb_release -si)
-        distro_version=$(lsb_release -sr)
-        distro_info="$distro_name $distro_version"
-    elif [ -f /etc/redhat-release ]; then
-        distro_info=$(cat /etc/redhat-release)
-    elif [ -f /etc/debian_version ]; then
-        distro_info="Debian $(cat /etc/debian_version)"
-    else
-        distro_info="Unknown Linux distribution"
-        log "Unknown Linux distribution, /etc/os-release or lsb_release not found." warn
-    fi
-    log "Distribution: $distro_info" system
+map_win_ver_name() {
+    case "$win_version_number" in
+        11.0.*) win_version_name="Windows 11" ;;
+        10.0.*) win_version_name="Windows 10" ;;
+        6.3.*) win_version_name="Windows 8.1" ;;
+        6.2.*) win_version_name="Windows 8" ;;
+        6.1.*) win_version_name="Windows 7" ;;
+        6.0.*) win_version_name="Windows Vista" ;;
+        5.1.*) win_version_name="Windows XP" ;;
+        5.0.*) win_version_name="Windows 2000" ;;
+        4.0.*) win_version_name="Windows NT 4.0" ;;
+        3.51.*) win_version_name="Windows NT 3.51" ;;
+        3.5.*) win_version_name="Windows NT 3.5" ;;
+        3.1.*) win_version_name="Windows 3.1" ;;
+        2.0.*) win_version_name="Windows 2.0" ;;
+        1.0.*) win_version_name="Windows 1.0" ;;
+        *) 
+            win_version_name="Unknown"
+            log "Unable to map Windows version number." warn
+            ;;
+    esac
+    log "Windows Version Name: $win_version_name" system
 }
 
-detect_windows_version() {
-    if command -v powershell.exe &>/dev/null; then
-        win_name=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Caption" | tr -d '\r')
-        win_version=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).Version" | tr -d '\r')
-        win_build=$(powershell.exe -Command "(Get-WmiObject -Class Win32_OperatingSystem).BuildNumber" | tr -d '\r')
-        if [ -z "$win_name" ] || [ -z "$win_version" ]; then
-            win_info="Unknown Windows version"
-            log "Unable to fully retrieve Windows version info" warn
-        else
-            win_info="$win_name (Version: $win_version, Build: $win_build)"
-        fi
-    elif command -v wmic &>/dev/null; then
-        win_info=$(wmic os get Caption, Version /format:table | sed -n 2p)
-    elif command -v cmd.exe &>/dev/null; then
-        win_info=$(cmd.exe /c ver | tr -d '\r')
-    else
-        win_info="Unknown Windows version"
-        log "No available method to detect Windows version." warn
-    fi
-    log "Windows Version: $win_info" system
+map_solaris_ver_name() {
+    case "$solaris_version_number" in
+        11.*) solaris_version_name="Oracle Solaris 11" ;;
+        10.*) solaris_version_name="Oracle Solaris 10" ;;
+        5.11) solaris_version_name="SunOS 5.11" ;;
+        5.10) solaris_version_name="SunOS 5.10" ;;
+        5.9)  solaris_version_name="SunOS 5.9" ;;
+        5.8)  solaris_version_name="SunOS 5.8" ;;
+        *)
+            solaris_version_name="Unknown"
+            log "Unable to map Solaris version number." warn
+            ;;
+    esac
+    log "Solaris Version Name: $solaris_version_name" system
 }
 
-detect_freebsd_version() {
-    if [ -f /etc/os-release ]; then
-        bsd_name=$(grep '^NAME=' /etc/os-release | cut -d '"' -f 2)
-        bsd_version=$(grep '^VERSION=' /etc/os-release | cut -d '"' -f 2)
-        bsd_info="$bsd_name $bsd_version"
-    elif command -v uname &>/dev/null; then
-        bsd_name=$(uname -s)
-        bsd_version=$(uname -r)
-        bsd_info="$bsd_name $bsd_version"
-    else
-        bsd_info="Unknown BSD version"
-        log "Unable to detect BSD version, /etc/os-release or uname missing." warn
-    fi
-    log "BSD Version: $bsd_info" system
+map_android_ver_name() {
+    case "$android_version_number" in
+        14.*) android_version_name="Upside Down Cake" ;;
+        13.*) android_version_name="Tiramisu" ;;
+        12.*) android_version_name="Snow Cone" ;;
+        11.*) android_version_name="Red Velvet Cake" ;;
+        10.*) android_version_name="Quince Tart" ;;
+        9.*)  android_version_name="Pie" ;;
+        8.*)  android_version_name="Oreo" ;;
+        7.*)  android_version_name="Nougat" ;;
+        6.*)  android_version_name="Marshmallow" ;;
+        5.*)  android_version_name="Lollipop" ;;
+        4.4*) android_version_name="KitKat" ;;
+        4.3*) android_version_name="Jelly Bean" ;;
+        4.2*) android_version_name="Jelly Bean" ;;
+        4.1*) android_version_name="Jelly Bean" ;;
+        4.0*) android_version_name="Ice Cream Sandwich" ;;
+        3.*)  android_version_name="Honeycomb" ;;
+        2.3*) android_version_name="Gingerbread" ;;
+        2.2*) android_version_name="FroYo" ;;
+        2.1*) android_version_name="Eclair" ;;
+        1.6)  android_version_name="Donut" ;;
+        1.5)  android_version_name="Cupcake" ;;
+        *)
+            android_version_name="Unknown"
+            log "Unable to map Android version number." warn
+            ;;
+    esac
+    log "Android Version Name: $android_version_name" system
 }
 
-detect_solaris_version() {
-    if [ -f /etc/release ]; then
-        sol_version=$(grep '^Oracle Solaris' /etc/release | cut -d ':' -f 2 | xargs)
-        sol_info="Oracle Solaris $sol_version"
-    elif command -v uname &>/dev/null; then
-        sol_info="Solaris $(uname -r)"
-    else
-        sol_info="Unknown Solaris version"
-        log "Unable to detect Solaris version" warn
-    fi
-    log "Solaris Version: $sol_info" system
-}
-
-detect_android_version() {
-    if command -v getprop &>/dev/null; then
-        android_version=$(getprop ro.build.version.release)
-        android_codename=$(getprop ro.build.version.codename)
-        android_device=$(getprop ro.product.model)
-        if [[ -z "$android_version" ]]; then
-            log "Unknown Android version" warn
-        else
-            log "Android Version: $android_version ($android_codename), Device: $android_device" system
-        fi
-    else
-        log "Command 'getprop' not found. Unable to detect Android version." error
-    fi
-}
-
-detect_ios_version() {
-    if command -v ideviceinfo &>/dev/null; then
-        ios_version=$(ideviceinfo -k ProductVersion)
-        ios_device=$(ideviceinfo -k ProductType)
-        ios_name="iOS"
-        if [[ -z "$ios_version" ]]; then
-            log "Unknown iOS version" warn
-        else
-            log "iOS Version: $ios_version, Device: $ios_device" system
-        fi
-    else
-        log "Command 'ideviceinfo' not found. Unable to detect iOS version." error
-    fi
-}
-
-detect_aix_version() {
-    if command -v oslevel &>/dev/null; then
-        aix_version=$(oslevel)
-        if [[ -z "$aix_version" ]]; then
-            log "Unknown AIX version" warn
-        else
-            log "AIX Version: $aix_version" system
-        fi
-    else
-        log "Command 'oslevel' not found. Unable to detect AIX version." error
-    fi
-}
 
 #### DESKTOP ENV
 
@@ -670,7 +816,13 @@ run_detection() {
 
     detect_container
     detect_os
-    detect_version
+
+    if [[ "$os_name" == "Linux" ]]; then
+        detect_linux_dist
+    fi
+
+    detect_version_number
+    detect_version_name
     detect_desktop_env
     detect_arch
     detect_kernel
