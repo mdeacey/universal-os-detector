@@ -137,21 +137,21 @@ source <(curl -sL https://raw.githubusercontent.com/mdeacey/universal-os-detecto
 run_detection
 
 # Use the detection results
-if [ "$os" = "Linux" ]; then
+if [ "$os_name" = "Linux" ]; then
     echo "This is a Linux system. Running Linux-specific commands..."
     # Add your Linux-specific commands here
-elif [ "$os" = "MacOS" ]; then
+elif [ "$os_name" = "MacOS" ]; then
     echo "This is a MacOS system. Running MacOS-specific commands..."
     # Add your MacOS-specific commands here
-elif [ "$os" = "Windows" ]; then
+elif [ "$os_name" = "Windows" ]; then
     echo "This is a Windows system. Running Windows-specific commands..."
     # Add your Windows-specific commands here
 else
-    echo "Unknown operating system: $os"
+    echo "Unknown operating system: $os_name"
 fi
 
 # Check for specific distributions
-if [ "$os" = "Linux" ] && [[ "$distro_name" == *"Ubuntu"* ]]; then
+if [ "$os_name" = "Linux" ] && [[ "$distro_name" == *"Ubuntu"* ]]; then
     echo "This is an Ubuntu system. Running Ubuntu-specific commands..."
     # Add your Ubuntu-specific commands here
 fi
