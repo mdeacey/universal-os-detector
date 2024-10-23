@@ -773,8 +773,6 @@ cleanup() {
     log "Removing log file..." info
     rm -f "$log_file".lock
     log "Cleanup completed" info
-    log "Exiting..." info
-    exit 0
 }
 
 #### MAIN
@@ -805,3 +803,4 @@ run_detection() {
 }
 
 run_detection
+log "Exiting..." info
